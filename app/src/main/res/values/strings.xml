@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">russianCraftBeer</string>
+    <string name="title_activity_maps">Map</string>
+
+    <string name="key_binding_default_toolbar_name">Modal-Toolbar-Title</string>
+
+    <string name="BottomSheetBehaviorGoogleMapsLike">ru.xmn.common.widgets.BottomSheetBehaviorGoogleMapsLike</string>
+    <string name="BackDropBottomSheetBehavior">ru.xmn.common.widgets.BackdropBottomSheetBehavior</string>
+    <string name="ScrollAwareFABBehavior">ru.xmn.common.widgets.ScrollAwareFABBehavior</string>
+    <string name="MergedAppBarLayoutBehavior">ru.xmn.common.widgets.MergedAppBarLayoutBehavior</string>
+    <string name="ScrollingAppBarLayoutBehavior">ru.xmn.common.widgets.ScrollingAppBarLayoutBehavior</string>
+</resources>
