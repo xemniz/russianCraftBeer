@@ -1,8 +1,6 @@
-package ru.xmn.screens.map
+package ru.xmn.russiancraftbeer.screens.map
 
 import org.junit.Test
-
-import org.junit.Assert.*
 
 /**
  * Created by xmn on 20.08.2017.

@@ -1,4 +1,4 @@
-package ru.xmn.screens.map.bl
+package ru.xmn.russiancraftbeer.screens.map.bl
 
 import io.reactivex.Flowable
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto

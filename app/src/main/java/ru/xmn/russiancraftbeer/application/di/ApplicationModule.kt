@@ -4,7 +4,7 @@ import android.content.Context
 import dagger.Module
 import dagger.Provides
 import ru.xmn.russiancraftbeer.application.App
-import ru.xmn.screens.map.di.MapComponent
+import ru.xmn.russiancraftbeer.screens.map.di.MapComponent
 import javax.inject.Singleton
 
 @Module(subcomponents = arrayOf(MapComponent::class))

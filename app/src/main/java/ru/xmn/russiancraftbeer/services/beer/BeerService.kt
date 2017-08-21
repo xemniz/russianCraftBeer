@@ -1,7 +1,6 @@
 package ru.xmn.russiancraftbeer.services.beer
 
 import io.reactivex.Flowable
-import io.reactivex.Observable
 import retrofit2.http.*
 
 interface BeerService {

@@ -5,7 +5,6 @@ import com.vicpin.krealmextensions.queryAllAsFlowable
 import com.vicpin.krealmextensions.save
 import com.vicpin.krealmextensions.saveAll
 import io.reactivex.Flowable
-import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
 import khronos.Dates
 import khronos.days
@@ -26,12 +25,16 @@ class PubRepository(val service: BeerService) {
     fun getPub(id: String): Flowable<PubDto> {
         val query = PubRealm().query { query -> query.equalTo("id", id) }
         if (query.isEmpty() || Dates.now - 1.hours > query[0].date)
-            return service.getPub(id)
-                    .map { it.also { it.nid = id } }
-                    .doOnNext { it.toRealm().save() }
-                    .subscribeOn(Schedulers.io())
+            return getPubFromNetwork(id)
         else
             return Flowable.just(query[0].fromRealm())
+    }
+
+    private fun getPubFromNetwork(id: String): Flowable<PubDto> {
+        return service.getPub(id)
+                .map { it.also { it.nid = id } }
+                .doOnNext { it.toRealm().save() }
+                .subscribeOn(Schedulers.io())
     }
 
     private fun getPubsFromNetwork(): Flowable<List<PubMapDto>> {

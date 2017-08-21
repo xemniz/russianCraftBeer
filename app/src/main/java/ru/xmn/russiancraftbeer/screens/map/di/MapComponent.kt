@@ -1,13 +1,13 @@
-package ru.xmn.screens.map.di
+package ru.xmn.russiancraftbeer.screens.map.di
 
 import dagger.Module
 import dagger.Provides
 import dagger.Subcomponent
 import ru.xmn.russiancraftbeer.services.beer.PubRepository
-import ru.xmn.screens.map.bl.MapListUseCase
-import ru.xmn.screens.map.bl.PubUseCase
-import ru.xmn.screens.map.ui.MapViewModel
-import ru.xmn.screens.map.ui.PubViewModel
+import ru.xmn.russiancraftbeer.screens.map.bl.MapListUseCase
+import ru.xmn.russiancraftbeer.screens.map.bl.PubUseCase
+import ru.xmn.russiancraftbeer.screens.map.ui.MapViewModel
+import ru.xmn.russiancraftbeer.screens.map.ui.PubViewModel
 
 @Subcomponent(modules = arrayOf(MapModule::class))
 interface MapComponent {

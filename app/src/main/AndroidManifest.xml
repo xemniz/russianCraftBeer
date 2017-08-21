@@ -28,7 +28,7 @@
             android:value="@string/google_maps_key"/>
 
         <activity
-            android:name="ru.xmn.screens.map.ui.MapsActivity"
+            android:name="ru.xmn.russiancraftbeer.screens.map.ui.MapsActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

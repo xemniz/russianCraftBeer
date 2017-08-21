@@ -1,4 +1,4 @@
-package ru.xmn.screens.map.ui
+package ru.xmn.russiancraftbeer.screens.map.ui
 
 import android.arch.lifecycle.*
 import android.os.Bundle
@@ -20,9 +20,9 @@ import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.application.App
 import ru.xmn.russiancraftbeer.services.beer.PubDto
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
-import ru.xmn.screens.map.bl.MapListUseCase
-import ru.xmn.screens.map.bl.PubUseCase
-import ru.xmn.screens.map.di.MapModule
+import ru.xmn.russiancraftbeer.screens.map.bl.MapListUseCase
+import ru.xmn.russiancraftbeer.screens.map.bl.PubUseCase
+import ru.xmn.russiancraftbeer.screens.map.di.MapModule
 import javax.inject.Inject
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryOwner {
@@ -119,8 +119,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
     private fun showPubsOnMap(pubs: List<PubMapDto>) {
         pubs.forEach({
             val pub = LatLng(it.map!![0].coordinates[1], it.map[0].coordinates[0])
-            map.addMarker(MarkerOptions().position(pub).title(it.title))
-            map.setOnMarkerClickListener { marker -> pubViewModel.clickPub(marker.tag as String); true }
+            val marker = map.addMarker(MarkerOptions().position(pub).title(it.title))
+            marker.tag = it.nid
+            map.setOnMarkerClickListener { m -> pubViewModel.clickPub(m.tag as String); true }
         })
     }
 }
