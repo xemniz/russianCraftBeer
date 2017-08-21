@@ -23,7 +23,7 @@ class PubRepository(val service: BeerService) {
     }
 
     fun getPub(id: String): Flowable<PubDto> {
-        val query = PubRealm().query { query -> query.equalTo("id", id) }
+        val query = PubRealm().query { query -> query.equalTo("nid", id) }
         if (query.isEmpty() || Dates.now - 1.hours > query[0].date)
             return getPubFromNetwork(id)
         else
@@ -32,7 +32,9 @@ class PubRepository(val service: BeerService) {
 
     private fun getPubFromNetwork(id: String): Flowable<PubDto> {
         return service.getPub(id)
+                .map { it[0] }
                 .map { it.also { it.nid = id } }
+                .map { it.copy( logo = it.logo!!.substringBefore("\" width").substringAfter("src=\"")) }
                 .doOnNext { it.toRealm().save() }
                 .subscribeOn(Schedulers.io())
     }

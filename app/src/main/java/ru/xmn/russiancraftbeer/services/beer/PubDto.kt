@@ -1,5 +1,6 @@
 package ru.xmn.russiancraftbeer.services.beer
 
+import com.squareup.moshi.Moshi
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 import khronos.Dates
@@ -10,7 +11,7 @@ data class PubDto(
         val logo: String?,
         val body: String?,
         val address: List<String>?,
-        val map: List<String>?,
+        val map: List<MapPoint>?,
         val phones: List<String>?,
         val site: List<String>?
 ){
@@ -32,7 +33,7 @@ fun PubDto.toRealm() = PubRealm().apply {
     logo = this@toRealm.logo
     body = this@toRealm.body
     address = this@toRealm.address.serialize()
-    map = this@toRealm.map.serialize()
+    map = this@toRealm.map?.map { it.toJson() }.serialize()
     phones = this@toRealm.phones.serialize()
     site = this@toRealm.site.serialize()
     date = Dates.now
@@ -43,7 +44,7 @@ fun PubRealm.fromRealm() = PubDto(
         logo,
         body,
         address.deserialize(),
-        map.deserialize(),
+        map.deserialize().map { Moshi.Builder().build().fromJson<MapPoint>(it)!! },
         phones.deserialize(),
         site.deserialize()
 ).apply { nid = this@fromRealm.nid }

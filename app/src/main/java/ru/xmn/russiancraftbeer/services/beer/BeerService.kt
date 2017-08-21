@@ -8,5 +8,5 @@ interface BeerService {
     fun getPubListMap(): Flowable<List<PubMapDto>>
 
     @GET("json_data_3/nidinfo")
-    fun getPub(@Query("nid") id: String): Flowable<PubDto>
+    fun getPub(@Query("nid") id: String): Flowable<List<PubDto>>
 }

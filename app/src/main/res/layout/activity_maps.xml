@@ -1,16 +1,19 @@
-<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/coordinator"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context="ru.xmn.russiancraftbeer.screens.map.ui.MapsActivity" />
+        android:fitsSystemWindows="true"
+        tools:context="ru.xmn.russiancraftbeer.screens.map.ui.MapsActivity"/>
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbarlayout"
@@ -23,21 +26,23 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
+            app:popupTheme="@style/AppTheme.PopupOverlay"/>
     </android.support.design.widget.AppBarLayout>
 
     <ImageView
-        android:id="@+id/pager"
+        android:id="@+id/pubLogo"
         android:layout_width="match_parent"
         android:layout_height="@dimen/anchor_point"
         android:background="@android:color/white"
         android:fitsSystemWindows="true"
-        app:layout_behavior="@string/BackDropBottomSheetBehavior" />
+        android:scaleType="centerCrop"
+        app:layout_behavior="@string/BackDropBottomSheetBehavior"/>
 
     <android.support.v4.widget.NestedScrollView
         android:id="@+id/bottom_sheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@android:color/white"
         android:fitsSystemWindows="true"
         android:orientation="vertical"
         app:anchorPoint="@dimen/anchor_point"
@@ -47,10 +52,10 @@
 
         <include
             android:id="@+id/pubSheet"
+            layout="@layout/pub_sheet"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fitsSystemWindows="true"
-            layout="@layout/pub_sheet"/>
+            android:fitsSystemWindows="true"/>
     </android.support.v4.widget.NestedScrollView>
 
     <android.support.design.widget.FloatingActionButton
@@ -61,7 +66,7 @@
         android:src="@drawable/ic_navigation_black_24dp"
         app:layout_anchor="@id/bottom_sheet"
         app:layout_anchorGravity="top|right|end"
-        app:layout_behavior="@string/ScrollAwareFABBehavior" />
+        app:layout_behavior="@string/ScrollAwareFABBehavior"/>
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/merged_appbarlayout"
@@ -81,7 +86,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_gravity="bottom"
-                android:background="@color/colorPrimary" />
+                android:background="@color/colorPrimary"/>
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/expanded_toolbar"
@@ -89,7 +94,7 @@
                 android:layout_height="?attr/actionBarSize"
                 app:navigationIcon="@drawable/ic_close_black_24dp"
                 app:popupTheme="@style/AppTheme.PopupOverlay"
-                app:title="@string/key_binding_default_toolbar_name" />
+                app:title="@string/key_binding_default_toolbar_name"/>
         </FrameLayout>
     </android.support.design.widget.AppBarLayout>
 </android.support.design.widget.CoordinatorLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -11,25 +12,25 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_sheet_peek_height"
         android:background="@color/colorPrimary"
+        android:gravity="center_vertical"
         android:orientation="vertical"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         android:paddingStart="16dp"
-        android:gravity="center_vertical">
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/pubTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="@style/Base.TextAppearance.AppCompat.Large.Inverse"
-            tools:text="Sample" />
+            tools:text="Sample"/>
 
         <TextView
             android:id="@+id/pubType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="@style/Base.TextAppearance.AppCompat.Subhead.Inverse"
-            tools:text="Sample" />
+            tools:text="Sample"/>
     </LinearLayout>
 
     <TextView
@@ -45,4 +46,27 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/pubDescription"/>
+
+    <FrameLayout
+        android:id="@+id/progressBarTopLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible">
+
+        <ProgressBar
+            android:paddingTop="10dp"
+            android:id="@+id/progressBarBottomSheet"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:indeterminate="true"
+            android:paddingLeft="16dp"/>
+    </FrameLayout>
+
 </android.support.constraint.ConstraintLayout>
