@@ -2,6 +2,7 @@ package ru.xmn.russiancraftbeer.screens.map.ui
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
+import android.arch.lifecycle.ViewModelProvider
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import ru.xmn.russiancraftbeer.application.App
@@ -10,16 +11,18 @@ import ru.xmn.russiancraftbeer.screens.map.di.MapModule
 import ru.xmn.russiancraftbeer.services.beer.PubDto
 import javax.inject.Inject
 
-class PubViewModel : ViewModel() {
+class PubViewModel(val nid: String) : ViewModel() {
     @Inject
     lateinit var pubUseCase: PubUseCase
     val mapState: MutableLiveData<PubState> = MutableLiveData()
 
     init {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
+
+        clickPub(nid)
     }
 
-    fun clickPub(id: String) {
+    private fun clickPub(id: String) {
         pubUseCase.getPub(id)
                 .map<PubState> { PubState.Success(it) }
                 .startWith(PubState.Loading())
@@ -27,6 +30,13 @@ class PubViewModel : ViewModel() {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ mapState.value = it })
+    }
+
+    class Factory(val nid: String) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return PubViewModel(nid) as T
+        }
+
     }
 }
 

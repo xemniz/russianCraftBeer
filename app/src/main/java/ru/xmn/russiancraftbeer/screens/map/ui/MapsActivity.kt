@@ -18,6 +18,8 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_maps.*
 import org.jetbrains.anko.toast
+import ru.xmn.common.extensions.dp
+import ru.xmn.common.extensions.px
 import ru.xmn.common.widgets.BottomSheetBehaviorGoogleMapsLike
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
@@ -42,6 +44,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         setupToolbar()
         setupMap()
         setupBehaviors()
+        viewPager.adapter = PubPagerAdapter(this,
+                {s -> ViewModelProviders.of(this, PubViewModel.Factory(s.nid)).get(s.nid, PubViewModel::class.java)})
     }
 
     private fun setupToolbar() {
@@ -89,8 +93,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
     }
 
     private fun setupViewModel() {
-        mapViewModel = ViewModelProviders.of(this).get(MapViewModel::class.java);
-        pubViewModel = ViewModelProviders.of(this).get(PubViewModel::class.java)
+        mapViewModel = ViewModelProviders.of(this).get(MapViewModel::class.java)
         mapViewModel.mapState.observe(this, Observer {
             when {
                 it is MapState.Loading -> {
@@ -101,7 +104,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
                 }
             }
         })
-        viewPager.adapter = PubPagerAdapter(this, pubViewModel)
     }
 
     private fun showPubsOnMap(pubs: List<PubMapDto>) {
@@ -109,15 +111,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         pubs.forEach({
             val pub = LatLng(it.map!![0].coordinates[1], it.map[0].coordinates[0])
             val marker = map.addMarker(MarkerOptions().position(pub).title(it.title))
-            marker.tag = it.nid
+            marker.tag = it.uniqueTag
             map.setOnMarkerClickListener(this::mapClick)
         })
     }
 
     private fun mapClick(m: Marker): Boolean {
         behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-        val nid = (m.tag as String)
-        pubViewModel.clickPub(nid)
         return true
     }
 }

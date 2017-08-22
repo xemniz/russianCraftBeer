@@ -17,7 +17,10 @@ data class PubMapDto(
         val type: String?,
         val title: String?,
         val field_logo: String?
-)
+) {
+    val uniqueTag: String
+        get() = address?.get(0)?:""
+}
 
 data class MapPoint(val type: String, val coordinates: List<Double>)
 open class PubMapRealm() : RealmObject() {

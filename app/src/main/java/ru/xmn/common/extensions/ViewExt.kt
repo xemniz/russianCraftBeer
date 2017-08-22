@@ -1,5 +1,6 @@
 package ru.xmn.common.extensions
 
+import android.content.res.Resources
 import android.graphics.Rect
 import android.support.v4.view.ViewCompat
 import android.view.View
@@ -26,3 +27,8 @@ fun View.invisible() {
 fun View.gone() {
     this.visibility = View.GONE
 }
+
+val Int.dp: Int
+    get() = (this / Resources.getSystem().displayMetrics.density).toInt()
+val Int.px: Int
+    get() = (this * Resources.getSystem().displayMetrics.density).toInt()

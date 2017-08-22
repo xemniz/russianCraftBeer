@@ -29,7 +29,7 @@ class PubDataClassesTest {
                 "logo",
                 "body",
                 "logo",
-                "body"
+                "body",
         )
         val toRealm = pubDto.toRealm()
         assertEquals(pubDto, toRealm.fromRealm())
