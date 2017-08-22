@@ -22,14 +22,14 @@
             android:id="@+id/pubTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Large.Inverse"
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
             tools:text="Sample"/>
 
         <TextView
             android:id="@+id/pubType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Subhead.Inverse"
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Subhead"
             tools:text="Sample"/>
     </LinearLayout>
 

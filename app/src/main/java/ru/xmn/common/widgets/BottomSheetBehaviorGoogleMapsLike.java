@@ -26,6 +26,12 @@ import ru.xmn.russiancraftbeer.R;
 
 public class BottomSheetBehaviorGoogleMapsLike<V extends View> extends CoordinatorLayout.Behavior<V> {
 
+    private boolean allowDragAndScroll;
+
+    public void setAllowDragAndScroll(boolean allowDragAndScroll) {
+        this.allowDragAndScroll = allowDragAndScroll;
+    }
+
     /**
      * Callback for monitoring events about bottom sheets.
      */
@@ -216,6 +222,7 @@ public class BottomSheetBehaviorGoogleMapsLike<V extends View> extends Coordinat
 
     @Override
     public boolean onInterceptTouchEvent(CoordinatorLayout parent, V child, MotionEvent event ) {
+        if (!allowDragAndScroll) return false;
         if ( ! child.isShown() ) {
             return false;
         }
@@ -277,6 +284,7 @@ public class BottomSheetBehaviorGoogleMapsLike<V extends View> extends Coordinat
 
     @Override
     public boolean onTouchEvent(CoordinatorLayout parent, V child, MotionEvent event ) {
+        if (!allowDragAndScroll) return false;
         if ( ! child.isShown() ) {
             return false;
         }
@@ -304,6 +312,7 @@ public class BottomSheetBehaviorGoogleMapsLike<V extends View> extends Coordinat
 
     @Override
     public boolean onStartNestedScroll(CoordinatorLayout coordinatorLayout, V child, View directTargetChild, View target, int nestedScrollAxes ) {
+        if (!allowDragAndScroll) return false;
         mNestedScrolled = false;
         return ( nestedScrollAxes & ViewCompat.SCROLL_AXIS_VERTICAL ) != 0;
     }
@@ -474,6 +483,7 @@ public class BottomSheetBehaviorGoogleMapsLike<V extends View> extends Coordinat
     @Override
     public boolean onNestedPreFling(CoordinatorLayout coordinatorLayout, V child, View target,
                                     float velocityX, float velocityY) {
+        if (!allowDragAndScroll) return false;
         return target == mNestedScrollingChildRef.get() &&
                 (mState != STATE_EXPANDED ||
                         super.onNestedPreFling(coordinatorLayout, child, target,

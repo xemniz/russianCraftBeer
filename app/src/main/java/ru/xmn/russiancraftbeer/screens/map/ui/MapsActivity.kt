@@ -51,9 +51,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         val toolbar = toolbar
         setSupportActionBar(toolbar)
         supportActionBar?.setTitle("Beer map")
-        progressBarBottomSheet.getIndeterminateDrawable().setColorFilter(Color.WHITE, android.graphics.PorterDuff.Mode.MULTIPLY);
+        setupViewPager()
         setupMap()
         setupBehaviors()
+    }
+
+    private fun setupViewPager() {
+        
     }
 
     private fun setupMap() {
@@ -112,15 +116,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         pubViewModel.mapState.observe(this, Observer {
             when {
                 it is PubState.Loading -> {
-                    bottom_sheet.isClickable = false
+                    behavior.setAllowDragAndScroll(false)
                     progressBarTopLayout.visibility = View.VISIBLE
-                    pubTitle.text = ""
-                    pubDescription.text = ""
-                    pubType.text = ""
-                    pubLogo.setImageDrawable(null)
+                    bindPub(PubDto.empty(), "", "")
                 }
                 it is PubState.Success -> {
-                    bottom_sheet.isClickable = true
+                    behavior.setAllowDragAndScroll(true)
                     progressBarTopLayout.visibility = View.GONE
                     bindPub(it.pub, it.title, it.type)
                 }
@@ -135,10 +136,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         pubTitle.text = title
         pubType.text = type
         Glide.with(this)
-                .load(pub.logo!!)
+                .load(pub.logo)
                 .listener(object : RequestListener<Drawable> {
                     override fun onResourceReady(resource: Drawable?, model: Any?, target: Target<Drawable>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
-                        pubLogo.setImageDrawable(resource)
+//                        pubLogo.setImageDrawable(resource)
                         return true
                     }
 

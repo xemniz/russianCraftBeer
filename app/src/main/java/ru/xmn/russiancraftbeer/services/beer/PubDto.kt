@@ -16,6 +16,10 @@ data class PubDto(
         val site: List<String>?
 ){
     var nid: String? = null
+
+    companion object {
+        fun empty() = PubDto("", "", emptyList(), emptyList(), emptyList(), emptyList())
+    }
 }
 
 open class PubRealm() : RealmObject() {

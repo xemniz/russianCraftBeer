@@ -22,6 +22,7 @@ class PubViewModel : ViewModel() {
     fun clickPub(id: String, title: String, type: String) {
         pubUseCase.getPub(id)
                 .map<PubState> { PubState.Success(it, title, type) }
+//                .map<PubState> { PubState.Loading() }
                 .startWith(PubState.Loading())
                 .onErrorReturn { PubState.Error(it) }
                 .subscribeOn(Schedulers.io())
