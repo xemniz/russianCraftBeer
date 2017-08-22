@@ -20,14 +20,14 @@ import khronos.minus
 class PubRepositoryTest {
     lateinit var testRealm: Realm
     lateinit var pubRepository: PubRepository
-    val beerService: BeerService = object : BeerService{
+    val beerService: BeerService = object : BeerService {
         override fun getPubListMap(): Flowable<List<PubMapDto>> {
             return Flowable.empty<List<PubMapDto>>()
         }
 
-        override fun getPub(id: String): Flowable<PubDto> {
+        override fun getPub(id: String): Flowable<List<PubDto>> {
             return Flowable.just(
-                    PubDto(
+                    listOf(PubDto(
                             "",
                             "",
                             emptyList(),
@@ -35,7 +35,7 @@ class PubRepositoryTest {
                             emptyList(),
                             emptyList()
                     ).apply { nid = "test" }
-            )
+                    ))
         }
     }
 

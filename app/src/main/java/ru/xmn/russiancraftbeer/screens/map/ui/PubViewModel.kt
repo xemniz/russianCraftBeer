@@ -19,10 +19,9 @@ class PubViewModel : ViewModel() {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
     }
 
-    fun clickPub(id: String, title: String, type: String) {
+    fun clickPub(id: String) {
         pubUseCase.getPub(id)
-                .map<PubState> { PubState.Success(it, title, type) }
-//                .map<PubState> { PubState.Loading() }
+                .map<PubState> { PubState.Success(it) }
                 .startWith(PubState.Loading())
                 .onErrorReturn { PubState.Error(it) }
                 .subscribeOn(Schedulers.io())
@@ -32,7 +31,7 @@ class PubViewModel : ViewModel() {
 }
 
 sealed class PubState() {
-    class Success(val pub: PubDto, val title: String, val type: String) : PubState()
+    class Success(val pub: PubDto) : PubState()
     class Error(private val e: Throwable) : PubState() {
         val errorMessage: String
 

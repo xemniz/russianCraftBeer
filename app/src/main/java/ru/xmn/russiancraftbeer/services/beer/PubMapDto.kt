@@ -13,7 +13,7 @@ import java.util.*
 data class PubMapDto(
         val map: List<MapPoint>?,
         val address: List<String>?,
-        val nid: String?,
+        val nid: String,
         val type: String?,
         val title: String?,
         val field_logo: String?
@@ -44,7 +44,7 @@ fun PubMapDto.toRealm() = PubMapRealm().apply {
 fun PubMapRealm.fromRealm() = PubMapDto(
         map.deserialize().map { Moshi.Builder().build().fromJson<MapPoint>(it)!! },
         address.deserialize(),
-        nid,
+        nid!!,
         type,
         title,
         field_logo

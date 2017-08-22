@@ -41,7 +41,7 @@ class PubRepository(val service: BeerService) {
 
     private fun getPubsFromNetwork(): Flowable<List<PubMapDto>> {
         return service.getPubListMap()
-                .doOnNext({ it.map { it.toRealm() }.saveAll() })
+                .doOnNext({ it.map { it.copy( field_logo = it.field_logo!!.substringBefore("\" width").substringAfter("src=\"")) }.map { it.toRealm() }.saveAll() })
                 .subscribeOn(Schedulers.io())
     }
 }
