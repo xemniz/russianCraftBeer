@@ -3,6 +3,7 @@ package ru.xmn.russiancraftbeer.screens.map.ui
 import android.arch.lifecycle.Observer
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewCompat
+import android.transition.TransitionManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +19,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
     val TAG = R.string.PubPagerAdapterTag
 
     var items by Delegates.observable<List<PubMapDto>>(emptyList(), onChange = { _, _, value -> notifyDataSetChanged() })
+    var offset = 0f
 
     override fun isViewFromObject(view: View?, `object`: Any?): Boolean {
         return view === `object`
@@ -45,10 +47,6 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
         collection.removeView(view as View)
     }
 
-//    override fun getItemPosition(`object`: Any?): Int {
-//        return PagerAdapter.POSITION_NONE
-//    }
-
     private fun bind(layout: View, pubMapDto: PubMapDto) {
         layout.apply {
             ViewCompat.setNestedScrollingEnabled(nestedScrollView, true)
@@ -64,7 +62,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
                         bindPub(layout, PubDto.empty())
                     }
                     it is PubState.Success -> {
-                        progressBarTopLayout.visibility = View.GONE
+                        progressBarTopLayout.visibility = View.INVISIBLE
                         bindPub(layout, it.pub)
                     }
                     it is PubState.Error -> {
@@ -76,8 +74,12 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
     }
 
     fun bindPub(layout: View, pub: PubDto) {
-        layout.apply {
-//            pubDescription.text = pub.body
+        (layout as ViewGroup?)?.let {
+            TransitionManager.beginDelayedTransition(layout)
         }
+        layout.apply {
+            pubDescription.text = pub.body
+        }
+        performOffset(activity, layout.pubCard, offset)
     }
 }

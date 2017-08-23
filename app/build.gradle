@@ -26,6 +26,10 @@ android {
     }
 }
 
+repositories {
+    maven { url "https://raw.github.com/laenger/maven-releases/master/releases" }
+}
+
 dependencies {
 
     ext.dagger_version = "2.10"
@@ -82,4 +86,6 @@ dependencies {
     implementation 'com.github.hotchemi:khronos:0.1.0'
 
     implementation 'com.github.vicpinm:krealmextensions:1.1.1'
+
+    implementation "biz.laenger.android:vpbs:0.0.4"
 }

@@ -4,6 +4,7 @@ import android.content.res.Resources
 import android.graphics.Rect
 import android.support.v4.view.ViewCompat
 import android.view.View
+import kotlinx.android.synthetic.main.pub_sheet.view.*
 
 fun View.pairSharedTransition(): android.support.v4.util.Pair<View, String> {
     return android.support.v4.util.Pair<View, String>(this, ViewCompat.getTransitionName(this))
@@ -32,3 +33,15 @@ val Int.dp: Int
     get() = (this / Resources.getSystem().displayMetrics.density).toInt()
 val Int.px: Int
     get() = (this * Resources.getSystem().displayMetrics.density).toInt()
+
+fun View.changeWidth(w: Int){
+    val layoutParams = this.layoutParams
+    layoutParams.width = w
+    this.layoutParams = layoutParams
+}
+
+fun View.changeHeight(w: Int){
+    val layoutParams = this.layoutParams
+    layoutParams.height = w
+    this.layoutParams = layoutParams
+}

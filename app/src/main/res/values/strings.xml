@@ -10,4 +10,5 @@
     <string name="MergedAppBarLayoutBehavior">ru.xmn.common.widgets.MergedAppBarLayoutBehavior</string>
     <string name="ScrollingAppBarLayoutBehavior">ru.xmn.common.widgets.ScrollingAppBarLayoutBehavior</string>
     <string name="PubPagerAdapterTag">PubPagerAdapterTag</string>
+    <string name="pub_sheet_card_tag">pubSheetCardTag</string>
 </resources>

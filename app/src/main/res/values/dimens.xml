@@ -1,8 +1,8 @@
 <resources>
-    <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="fab_margin">16dp</dimen>
-    <dimen name="anchor_point">300dp</dimen>
-    <dimen name="bottom_sheet_peek_height">300dp</dimen>
+    <!--pub bottom sheet-->
+    <dimen name="view_pager_collapsed_width">200dp</dimen>
+    <dimen name="view_pager_collapsed_height">260dp</dimen>
+    <dimen name="logo_collapsed_height">170dp</dimen>
+    <dimen name="logo_expanded_height">240dp</dimen>
+    <dimen name="top_panel_height">60dp</dimen>
 </resources>
