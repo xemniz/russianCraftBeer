@@ -7,6 +7,7 @@ import io.reactivex.schedulers.Schedulers
 import ru.xmn.russiancraftbeer.application.App
 import ru.xmn.russiancraftbeer.screens.map.bl.MapListUseCase
 import ru.xmn.russiancraftbeer.screens.map.di.MapModule
+import ru.xmn.russiancraftbeer.services.beer.MapPoint
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import javax.inject.Inject
 
@@ -17,7 +18,10 @@ class MapViewModel : ViewModel() {
 
     init {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
-        mapListUseCase.getPabsForMap()
+    }
+
+    fun request(mapPoint: MapPoint) {
+        mapListUseCase.getPabsForMap(mapPoint)
                 .map<MapState> { MapState.Success(it) }
                 .startWith(MapState.Loading())
                 .onErrorReturn { MapState.Error(it) }

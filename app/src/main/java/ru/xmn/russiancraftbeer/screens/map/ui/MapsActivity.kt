@@ -1,5 +1,7 @@
 package ru.xmn.russiancraftbeer.screens.map.ui
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 
 
@@ -7,6 +9,7 @@ import android.arch.lifecycle.LifecycleRegistry
 import android.arch.lifecycle.LifecycleRegistryOwner
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
@@ -28,6 +31,15 @@ import ru.xmn.common.extensions.*
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
+import android.location.Criteria
+import android.content.Context.LOCATION_SERVICE
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.support.v4.content.ContextCompat
+import lolodev.permissionswrapper.callback.OnRequestPermissionsCallBack
+import lolodev.permissionswrapper.wrapper.PermissionWrapper
+import ru.xmn.russiancraftbeer.services.beer.MapPoint
+
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryOwner {
 
@@ -36,8 +48,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
 
     private lateinit var behavior: ViewPagerBottomSheetBehavior<ViewPager>
 
-    private val markers: MutableList<Marker> = ArrayList()
-
+    private val markers: MutableList<Marker> = ArrayList<Marker>()
+    private var currentMarker: Marker? = null
     private val registry = LifecycleRegistry(this)
 
     override fun getLifecycle(): LifecycleRegistry {
@@ -117,11 +129,51 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         map.setOnMapClickListener { behavior.state = ViewPagerBottomSheetBehavior.STATE_HIDDEN }
-        setupViewModel()
+
+        val checkPermision = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+        if (checkPermision)
+            showMyLocation()
+        else {
+            requestPerm()
+            setupViewModel()
+        }
     }
 
-    private fun setupViewModel() {
+    private fun requestPerm() {
+        PermissionWrapper.Builder(this)
+                .addPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
+                .addPermissionRationale("Rationale message")
+                .addPermissionsGoSettings(true)
+                .addRequestPermissionsCallBack(object : OnRequestPermissionsCallBack {
+                    override fun onGrant() {
+                        Log.i(MapsActivity::class.java.getSimpleName(), "Permission was granted.");
+                    }
+
+                    override fun onDenied(permission: String) {
+                        Log.i(MapsActivity::class.java.getSimpleName(), "Permission was not granted.");
+                    }
+                }).build().request();
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun showMyLocation() {
+        map.isMyLocationEnabled = true
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val criteria = Criteria()
+
+        val location = locationManager.getLastKnownLocation(locationManager
+                .getBestProvider(criteria, false))
+        val latitude = location.latitude
+        val longitude = location.longitude
+
+        setupViewModel(MapPoint("", listOf(longitude, latitude)))
+    }
+
+    private fun setupViewModel(mapPoint: MapPoint = MapPoint("", listOf(37.618423, 55.751244))) {
         mapViewModel = ViewModelProviders.of(this).get(MapViewModel::class.java)
+        mapViewModel.request(mapPoint)
         mapViewModel.mapState.observe(this, Observer {
             when {
                 it is MapState.Loading -> {
@@ -143,6 +195,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
             markers += marker
             map.setOnMarkerClickListener(this::mapClick)
         })
+        selectMarker(markers[0])
     }
 
     private fun selectMarker(marker: Marker) {
@@ -152,6 +205,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
                 15f
         ), object : GoogleMap.CancelableCallback {
             override fun onFinish() {
+                highlightMarker(marker)
                 map.setOnCameraMoveStartedListener { behavior.state = ViewPagerBottomSheetBehavior.STATE_HIDDEN }
             }
 
@@ -159,16 +213,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
             }
         }
         )
+    }
 
-
-        markers.asSequence().filter({ it !== marker }).forEach {
-            it.apply {
-                setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                zIndex = 0f
-            }
+    private fun highlightMarker(marker: Marker) {
+        currentMarker?.apply {
+            setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+            zIndex = 0f
         }
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
         marker.zIndex = 1f
+        currentMarker = marker
     }
 
     private fun mapClick(m: Marker): Boolean {
