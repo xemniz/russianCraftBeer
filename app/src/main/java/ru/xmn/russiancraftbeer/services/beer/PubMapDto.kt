@@ -22,7 +22,11 @@ data class PubMapDto(
         get() = address?.get(0)?:""
 }
 
-data class MapPoint(val type: String, val coordinates: List<Double>)
+data class MapPoint(val type: String, val coordinates: List<Double>){
+    companion object {
+        fun moscow() = MapPoint("", listOf(37.618423, 55.751244))
+    }
+}
 open class PubMapRealm() : RealmObject() {
 
     var map: String? = null

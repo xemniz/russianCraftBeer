@@ -1,7 +1,6 @@
 package ru.xmn.russiancraftbeer.screens.map.ui
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 
 
@@ -32,7 +31,6 @@ import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import android.location.Criteria
-import android.content.Context.LOCATION_SERVICE
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.support.v4.content.ContextCompat
@@ -43,18 +41,18 @@ import ru.xmn.russiancraftbeer.services.beer.MapPoint
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryOwner {
 
-    private lateinit var map: GoogleMap
-    private lateinit var mapViewModel: MapViewModel
-
-    private lateinit var behavior: ViewPagerBottomSheetBehavior<ViewPager>
-
-    private val markers: MutableList<Marker> = ArrayList<Marker>()
-    private var currentMarker: Marker? = null
     private val registry = LifecycleRegistry(this)
 
     override fun getLifecycle(): LifecycleRegistry {
         return registry
     }
+
+    private lateinit var map: GoogleMap
+    private lateinit var mapViewModel: MapViewModel
+
+    private lateinit var behavior: ViewPagerBottomSheetBehavior<ViewPager>
+    private val markers: MutableList<Marker> = ArrayList<Marker>()
+    private var currentMarker: Marker? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,13 +101,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         BottomSheetUtils.setupViewPager(bottomSheet)
         behavior.setBottomSheetCallback(object : ViewPagerBottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
-                when (newState) {
-                    ViewPagerBottomSheetBehavior.STATE_COLLAPSED -> Log.d("bottomsheet-", "STATE_COLLAPSED")
-                    ViewPagerBottomSheetBehavior.STATE_DRAGGING -> Log.d("bottomsheet-", "STATE_DRAGGING")
-                    ViewPagerBottomSheetBehavior.STATE_EXPANDED -> Log.d("bottomsheet-", "STATE_EXPANDED")
-                    ViewPagerBottomSheetBehavior.STATE_HIDDEN -> Log.d("bottomsheet-", "STATE_HIDDEN")
-                    ViewPagerBottomSheetBehavior.STATE_SETTLING -> Log.d("bottomsheet-", "STATE_SETTLING")
-                }
             }
 
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
@@ -157,21 +148,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
                 }).build().request();
     }
 
-    @SuppressLint("MissingPermission")
-    private fun showMyLocation() {
-        map.isMyLocationEnabled = true
-        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val criteria = Criteria()
-
-        val location = locationManager.getLastKnownLocation(locationManager
-                .getBestProvider(criteria, false))
-        val latitude = location.latitude
-        val longitude = location.longitude
-
-        setupViewModel(MapPoint("", listOf(longitude, latitude)))
-    }
-
-    private fun setupViewModel(mapPoint: MapPoint = MapPoint("", listOf(37.618423, 55.751244))) {
+    private fun setupViewModel(mapPoint: MapPoint = MapPoint.moscow()) {
         mapViewModel = ViewModelProviders.of(this).get(MapViewModel::class.java)
         mapViewModel.request(mapPoint)
         mapViewModel.mapState.observe(this, Observer {
@@ -186,6 +163,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         })
     }
 
+    private fun showMyLocation() {
+        try {
+            map.isMyLocationEnabled = true
+            val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val criteria = Criteria()
+
+            val location = locationManager.getLastKnownLocation(locationManager
+                    .getBestProvider(criteria, false))
+            val latitude = location.latitude
+            val longitude = location.longitude
+
+            setupViewModel(MapPoint("", listOf(longitude, latitude)))
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
+    }
+
     private fun showPubsOnMap(pubs: List<PubMapDto>) {
         (viewPager.adapter as PubPagerAdapter).items = pubs
         pubs.forEach({
@@ -193,7 +187,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
             val marker = map.addMarker(MarkerOptions().position(pub).title(it.title))
             marker.tag = it.uniqueTag
             markers += marker
-            map.setOnMarkerClickListener(this::mapClick)
+            map.setOnMarkerClickListener(this::markerClick)
         })
         selectMarker(markers[0])
     }
@@ -225,9 +219,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         currentMarker = marker
     }
 
-    private fun mapClick(m: Marker): Boolean {
+    private fun markerClick(m: Marker): Boolean {
         selectMarker(m)
         behavior.state = ViewPagerBottomSheetBehavior.STATE_COLLAPSED
+        val adapter = viewPager.adapter as PubPagerAdapter
+
+        val i = adapter.items.indexOfFirst { m.tag == it.uniqueTag }
+        viewPager.setCurrentItem(i, true)
         return true
     }
 }

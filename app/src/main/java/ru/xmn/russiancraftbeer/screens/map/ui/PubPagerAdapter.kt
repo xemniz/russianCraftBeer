@@ -3,14 +3,20 @@ package ru.xmn.russiancraftbeer.screens.map.ui
 import android.arch.lifecycle.Observer
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewCompat
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.transition.TransitionManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import kotlinx.android.synthetic.main.item_pub_contact.view.*
 import kotlinx.android.synthetic.main.pub_sheet.view.*
 import org.jetbrains.anko.toast
+import ru.xmn.common.extensions.inflate
 import ru.xmn.common.extensions.loadUrl
+import ru.xmn.common.ui.adapter.AutoUpdatableAdapter
 import ru.xmn.russiancraftbeer.R
+import ru.xmn.russiancraftbeer.services.beer.MapPoint
 import ru.xmn.russiancraftbeer.services.beer.PubDto
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import kotlin.properties.Delegates
@@ -79,7 +85,49 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
         }
         layout.apply {
             pubDescription.text = pub.body
+            pubContacts.layoutManager = LinearLayoutManager(activity)
+            pubContacts.adapter = PubContactsAdapter.from(pub.address, pub.map!!, pub.phones, pub.site)
         }
         performOffset(activity, layout.pubCard, offset)
     }
+}
+
+class PubContactsAdapter() : RecyclerView.Adapter<PubContactsAdapter.PubContactsViewHolder>(), AutoUpdatableAdapter {
+    companion object {
+        fun from(adress: List<String>?, map: List<MapPoint>, phones: List<String>?, site: List<String>?): PubContactsAdapter {
+            val items = ArrayList<ContactItem>()
+            items += adress!!.zip(map).map { ContactItem(R.drawable.ic_close_black_24dp, it.first, View.OnClickListener { }) }
+            items += phones!!.map { ContactItem(R.drawable.ic_close_black_24dp, it, View.OnClickListener { }) }
+            items += site!!.map { ContactItem(R.drawable.ic_close_black_24dp, it, View.OnClickListener { }) }
+
+            return PubContactsAdapter().also { it.items = items }
+        }
+    }
+
+    var items: List<ContactItem> by Delegates.observable(emptyList(),
+            { property, oldValue, newValue ->
+                autoNotify(oldValue, newValue) { a, b -> a.uniqueTag == b.uniqueTag }
+            })
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PubContactsViewHolder = PubContactsViewHolder(parent.inflate(R.layout.item_pub_contact))
+    override fun onBindViewHolder(holder: PubContactsViewHolder, position: Int) = holder.bind(items[position])
+
+    override fun getItemCount(): Int = items.count()
+
+    class PubContactsViewHolder(val v: View) : RecyclerView.ViewHolder(v) {
+        fun bind(item: ContactItem) {
+
+            v.apply {
+                contactIcon.setImageResource(item.iconRes)
+                contactTitle.text = item.title
+                setOnClickListener(item.click)
+            }
+        }
+
+    }
+}
+
+class ContactItem(val iconRes: Int, val title: CharSequence, val click: View.OnClickListener) {
+    val uniqueTag
+        get() = title
 }
