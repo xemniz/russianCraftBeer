@@ -1,5 +1,6 @@
 package ru.xmn.russiancraftbeer.services.beer
 
+import com.google.android.gms.maps.model.LatLng
 import com.squareup.moshi.Moshi
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
@@ -19,19 +20,21 @@ data class PubMapDto(
         val field_logo: String?
 ) {
     val uniqueTag: String
-        get() = address?.get(0)?:""
+        get() = address?.get(0) ?: ""
 }
 
-data class MapPoint(val type: String, val coordinates: List<Double>){
+data class MapPoint(val type: String, val coordinates: List<Double>) {
     companion object {
-        fun moscow() = MapPoint("", listOf(37.618423, 55.751244))
+        fun from(l: LatLng) = MapPoint("", listOf(l.longitude, l.latitude))
     }
 }
+
 open class PubMapRealm() : RealmObject() {
 
     var map: String? = null
     var address: String? = null
-    @PrimaryKey var nid: String? = null
+    @PrimaryKey
+    var nid: String? = null
     var type: String? = null
     var title: String? = null
     var field_logo: String? = null
@@ -49,7 +52,7 @@ fun PubMapDto.toRealm() = PubMapRealm().apply {
 }
 
 fun PubMapRealm.fromRealm() = PubMapDto(
-        map.deserialize().map { println(it); Moshi.Builder().build().fromJson<MapPoint>(it)!! },
+        map.deserialize().map { Moshi.Builder().build().fromJson<MapPoint>(it)!! },
         address.deserialize(),
         nid!!,
         type,

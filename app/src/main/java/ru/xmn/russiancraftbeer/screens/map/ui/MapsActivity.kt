@@ -1,7 +1,6 @@
 package ru.xmn.russiancraftbeer.screens.map.ui
 
 import android.Manifest
-import android.animation.ArgbEvaluator
 import android.app.Activity
 
 
@@ -9,39 +8,24 @@ import android.arch.lifecycle.LifecycleRegistry
 import android.arch.lifecycle.LifecycleRegistryOwner
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
 import biz.laenger.android.vpbs.BottomSheetUtils
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.pub_sheet.view.*
 import org.jetbrains.anko.toast
 import ru.xmn.common.extensions.*
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior
 import ru.xmn.russiancraftbeer.R
-import ru.xmn.russiancraftbeer.services.beer.PubMapDto
-import android.location.Criteria
-import android.content.pm.PackageManager
-import android.graphics.Color
-import android.location.LocationManager
-import android.support.v4.content.ContextCompat
 import lolodev.permissionswrapper.callback.OnRequestPermissionsCallBack
 import lolodev.permissionswrapper.wrapper.PermissionWrapper
 import ru.xmn.russiancraftbeer.services.beer.MapPoint
 
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryOwner {
+class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
 
     private val registry = LifecycleRegistry(this)
 
@@ -49,12 +33,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         return registry
     }
 
-    private lateinit var map: GoogleMap
     private lateinit var mapViewModel: MapViewModel
-
     private lateinit var behavior: ViewPagerBottomSheetBehavior<ViewPager>
-    private val markers: MutableList<Marker> = ArrayList()
-    private var currentMarker: Marker? = null
+
+    private val mapViewManager = MapViewManager(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,9 +47,44 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         setupViewPager()
     }
 
+    private fun setupMap() {
+        mapViewManager.init(object : MapViewManager.Delegate {
+            override fun mapClick() {
+                behavior.state = ViewPagerBottomSheetBehavior.STATE_HIDDEN
+            }
+
+            override fun locationChange(l: LatLng) {
+                setupViewModel(MapPoint.from(l))
+            }
+
+            override fun requestPermission() {
+                requestPerm()
+            }
+
+            override fun cameraMove() {
+                behavior.state = ViewPagerBottomSheetBehavior.STATE_HIDDEN
+            }
+
+            override fun markerClick(tag: String) {
+                behavior.state = ViewPagerBottomSheetBehavior.STATE_COLLAPSED
+                val adapter = viewPager.adapter as PubPagerAdapter
+                val i = adapter.items.indexOfFirst { tag == it.uniqueTag }
+                viewPager.setCurrentItem(i, true)
+            }
+
+            override fun myPositionClick() {
+                behavior.state = ViewPagerBottomSheetBehavior.STATE_COLLAPSED
+                viewPager.setCurrentItem(0, true)
+            }
+        })
+    }
+
     private fun setupViewPager() {
-        val pubPagerAdapter = PubPagerAdapter(this,
-                { s -> ViewModelProviders.of(this, PubViewModel.Factory(s.nid)).get(s.nid, PubViewModel::class.java) })
+        val pubPagerAdapter = PubPagerAdapter(
+                this,
+                { s -> ViewModelProviders.of(this, PubViewModel.Factory(s.nid)).get(s.nid, PubViewModel::class.java) },
+                { clickOnItem(it) }
+        )
         viewPager.adapter = pubPagerAdapter
         viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrollStateChanged(state: Int) {
@@ -77,24 +94,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
             }
 
             override fun onPageSelected(position: Int) {
-
-                selectMarker(markers[position])
+                mapViewManager.selectMarker(position)
             }
 
         })
+    }
+
+    private fun clickOnItem(position: Int) {
+        val inBounds: Boolean = !mapViewManager.selectMarkerIfNotInBounds(position)
+        if (inBounds && behavior.state != ViewPagerBottomSheetBehavior.STATE_EXPANDED) behavior.state = ViewPagerBottomSheetBehavior.STATE_EXPANDED
+        if (behavior.state == ViewPagerBottomSheetBehavior.STATE_EXPANDED) behavior.state = ViewPagerBottomSheetBehavior.STATE_COLLAPSED
     }
 
     private fun setupToolbar() {
 //        val toolbar = toolbar
 //        setSupportActionBar(toolbar)
 //        supportActionBar?.setTitle("Beer map")
-    }
-
-    private fun setupMap() {
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-                .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
     }
 
     private fun setupBehaviors() {
@@ -119,21 +134,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         behavior.state = ViewPagerBottomSheetBehavior.STATE_COLLAPSED
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        map = googleMap
-        map.setOnMapClickListener { behavior.state = ViewPagerBottomSheetBehavior.STATE_HIDDEN }
-
-        val checkPermision = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-
-        if (checkPermision)
-            showMyLocation()
-        else {
-            requestPerm()
-            setupViewModel()
-        }
-    }
-
     private fun requestPerm() {
         PermissionWrapper.Builder(this)
                 .addPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
@@ -141,23 +141,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
                 .addPermissionsGoSettings(true)
                 .addRequestPermissionsCallBack(object : OnRequestPermissionsCallBack {
                     override fun onGrant() {
-                        Log.i(MapsActivity::class.java.getSimpleName(), "Permission was granted.");
+                        mapViewManager.showRefreshedLocation()
                     }
 
                     override fun onDenied(permission: String) {
-                        Log.i(MapsActivity::class.java.getSimpleName(), "Permission was not granted.");
                     }
                 }).build().request();
     }
 
-    private fun setupViewModel(mapPoint: MapPoint = MapPoint.moscow()) {
+    private fun setupViewModel(mapPoint: MapPoint) {
         mapViewModel = ViewModelProviders.of(this).get(MapViewModel::class.java)
         mapViewModel.request(mapPoint)
         mapViewModel.mapState.observe(this, Observer {
             when {
                 it is MapState.Loading -> {
+                    mapLoading.visibility = View.VISIBLE
                 }
-                it is MapState.Success -> showPubsOnMap(it.pubs)
+                it is MapState.Success -> {
+                    mapLoading.visibility = View.GONE
+                    (viewPager.adapter as PubPagerAdapter).items = it.pubs
+                    mapViewManager.showPubsOnMap(it.pubs)
+                }
                 it is MapState.Error -> {
                     toast(it.errorMessage)
                 }
@@ -165,72 +169,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
         })
     }
 
-    private fun showMyLocation() {
-        try {
-            map.isMyLocationEnabled = true
-            val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val criteria = Criteria()
-
-            val location = locationManager.getLastKnownLocation(locationManager
-                    .getBestProvider(criteria, false))
-            val latitude = location.latitude
-            val longitude = location.longitude
-
-            setupViewModel(MapPoint("", listOf(longitude, latitude)))
-        } catch (e: SecurityException) {
-            e.printStackTrace()
+    override fun onBackPressed() {
+        when {
+            behavior.state == ViewPagerBottomSheetBehavior.STATE_EXPANDED -> behavior.state = ViewPagerBottomSheetBehavior.STATE_COLLAPSED
+            behavior.state == ViewPagerBottomSheetBehavior.STATE_COLLAPSED -> behavior.state = ViewPagerBottomSheetBehavior.STATE_HIDDEN
+            else -> super.onBackPressed()
         }
-    }
-
-    private fun showPubsOnMap(pubs: List<PubMapDto>) {
-        (viewPager.adapter as PubPagerAdapter).items = pubs
-        pubs.forEach({
-            val pub = LatLng(it.map!![0].coordinates[1], it.map[0].coordinates[0])
-            val marker = map.addMarker(MarkerOptions().position(pub).title(it.title))
-            marker.tag = it.uniqueTag
-            markers += marker
-            map.setOnMarkerClickListener(this::markerClick)
-        })
-        selectMarker(markers[0])
-    }
-
-    private fun selectMarker(marker: Marker) {
-        highlightMarker(marker)
-
-
-        map.setOnCameraMoveStartedListener(null)
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                marker.position.run { LatLng(this.latitude - .0025, this.longitude) },
-                15f
-        ), object : GoogleMap.CancelableCallback {
-            override fun onFinish() {
-                map.setOnCameraMoveStartedListener { behavior.state = ViewPagerBottomSheetBehavior.STATE_HIDDEN }
-            }
-
-            override fun onCancel() {
-            }
-        }
-        )
-    }
-
-    private fun highlightMarker(marker: Marker) {
-        currentMarker?.apply {
-            setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-            zIndex = 0f
-        }
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-        marker.zIndex = 1f
-        currentMarker = marker
-    }
-
-    private fun markerClick(m: Marker): Boolean {
-        selectMarker(m)
-        behavior.state = ViewPagerBottomSheetBehavior.STATE_COLLAPSED
-        val adapter = viewPager.adapter as PubPagerAdapter
-
-        val i = adapter.items.indexOfFirst { m.tag == it.uniqueTag }
-        viewPager.setCurrentItem(i, true)
-        return true
     }
 }
 

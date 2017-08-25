@@ -3,6 +3,7 @@ package ru.xmn.russiancraftbeer.screens.map.ui
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import ru.xmn.russiancraftbeer.application.App
 import ru.xmn.russiancraftbeer.screens.map.bl.MapListUseCase
@@ -20,8 +21,12 @@ class MapViewModel : ViewModel() {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
     }
 
+    private var subscribe: Disposable? = null
+
     fun request(mapPoint: MapPoint) {
-        mapListUseCase.getPabsForMap(mapPoint)
+        subscribe?.dispose()
+
+        subscribe = mapListUseCase.getPabsForMap(mapPoint)
                 .map<MapState> { MapState.Success(it) }
                 .startWith(MapState.Loading())
                 .onErrorReturn { MapState.Error(it) }

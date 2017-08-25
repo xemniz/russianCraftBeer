@@ -1,5 +1,6 @@
 package ru.xmn.russiancraftbeer.services.beer
 
+import com.google.android.gms.maps.model.LatLng
 import com.vicpin.krealmextensions.saveManaged
 import io.reactivex.Flowable
 import io.realm.Realm
@@ -11,6 +12,7 @@ import org.junit.Assert.*
 import io.realm.RealmConfiguration
 import khronos.Dates
 import khronos.days
+import khronos.hour
 import khronos.minus
 
 
@@ -45,6 +47,7 @@ class PubRepositoryTest {
         Realm.setDefaultConfiguration(testConfig)
         testRealm = Realm.getInstance(testConfig)
         pubRepository = PubRepository(beerService)
+        assertEquals(testRealm, Realm.getDefaultInstance())
     }
 
     @After
@@ -58,19 +61,10 @@ class PubRepositoryTest {
 
     @Test
     fun getPub() {
-        PubRealm().also {
-            it.nid = "123"
-            it.logo = ""
-            it.body = ""
-            it.address = ""
-            it.map = ""
-            it.phones = ""
-            it.site = ""
-            it.date = Dates.now - 2.days
-        }.saveManaged(testRealm)
+        PubDto("logo", "B", listOf(",","s"), listOf(MapPoint("sd", listOf(2.0,2.4))), listOf("\"sdf\""), listOf(" ")).also { it.nid = "123" }.toRealm().saveManaged(testRealm)
 
         val pub = pubRepository.getPub("123").blockingFirst()
-        assertEquals("test", pub.nid)
+        assertEquals("123", pub.nid)
     }
 
 }
