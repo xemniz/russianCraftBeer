@@ -49,7 +49,7 @@ fun PubMapDto.toRealm() = PubMapRealm().apply {
 }
 
 fun PubMapRealm.fromRealm() = PubMapDto(
-        map.deserialize().map { Moshi.Builder().build().fromJson<MapPoint>(it)!! },
+        map.deserialize().map { println(it); Moshi.Builder().build().fromJson<MapPoint>(it)!! },
         address.deserialize(),
         nid!!,
         type,

@@ -1,6 +1,7 @@
 package ru.xmn.russiancraftbeer.screens.map.ui
 
 import android.Manifest
+import android.animation.ArgbEvaluator
 import android.app.Activity
 
 
@@ -32,6 +33,7 @@ import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import android.location.Criteria
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.LocationManager
 import android.support.v4.content.ContextCompat
 import lolodev.permissionswrapper.callback.OnRequestPermissionsCallBack
@@ -51,7 +53,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
     private lateinit var mapViewModel: MapViewModel
 
     private lateinit var behavior: ViewPagerBottomSheetBehavior<ViewPager>
-    private val markers: MutableList<Marker> = ArrayList<Marker>()
+    private val markers: MutableList<Marker> = ArrayList()
     private var currentMarker: Marker? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -193,13 +195,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, LifecycleRegistryO
     }
 
     private fun selectMarker(marker: Marker) {
+        highlightMarker(marker)
+
+
         map.setOnCameraMoveStartedListener(null)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                 marker.position.run { LatLng(this.latitude - .0025, this.longitude) },
                 15f
         ), object : GoogleMap.CancelableCallback {
             override fun onFinish() {
-                highlightMarker(marker)
                 map.setOnCameraMoveStartedListener { behavior.state = ViewPagerBottomSheetBehavior.STATE_HIDDEN }
             }
 
@@ -243,5 +247,6 @@ fun performOffset(activity: Activity, pubCardView: View, slideOffset: Float) {
 
     val contentAlpha = offsetedValue(slideOffset, 0f, 1f)
     pubCardView.pubContent.alpha = contentAlpha
+
     pubCardView.invalidate()
 }

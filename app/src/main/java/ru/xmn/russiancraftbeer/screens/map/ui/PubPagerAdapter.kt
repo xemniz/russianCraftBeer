@@ -20,6 +20,14 @@ import ru.xmn.russiancraftbeer.services.beer.MapPoint
 import ru.xmn.russiancraftbeer.services.beer.PubDto
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import kotlin.properties.Delegates
+import android.support.v4.content.ContextCompat.startActivity
+import android.content.Intent
+import android.net.Uri
+import android.support.v4.content.ContextCompat.startActivity
+import android.support.v4.content.ContextCompat.startActivity
+
+
+
 
 class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactory: (pub: PubMapDto) -> PubViewModel) : PagerAdapter() {
     val TAG = R.string.PubPagerAdapterTag
@@ -96,9 +104,31 @@ class PubContactsAdapter() : RecyclerView.Adapter<PubContactsAdapter.PubContacts
     companion object {
         fun from(adress: List<String>?, map: List<MapPoint>, phones: List<String>?, site: List<String>?): PubContactsAdapter {
             val items = ArrayList<ContactItem>()
-            items += adress!!.zip(map).map { ContactItem(R.drawable.ic_close_black_24dp, it.first, View.OnClickListener { }) }
-            items += phones!!.map { ContactItem(R.drawable.ic_close_black_24dp, it, View.OnClickListener { }) }
-            items += site!!.map { ContactItem(R.drawable.ic_close_black_24dp, it, View.OnClickListener { }) }
+            if (adress != null) {
+                items += adress.zip(map).map {
+                    ContactItem(R.drawable.ic_location_on_black_24dp, it.first, View.OnClickListener { view ->
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=${it.second.coordinates[1]},${it.second.coordinates[0]}"))
+                        startActivity(view.context, intent, null)
+                    })
+                }
+            }
+            if (phones != null) {
+                items += phones.map {
+                    ContactItem(R.drawable.ic_local_phone_black_24dp, it, View.OnClickListener { view ->
+                        val i = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$it"))
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(view.context, i, null)
+                    })
+                }
+            }
+            if (site != null) {
+                items += site.map { ContactItem(R.drawable.ic_language_black_24dp, it, View.OnClickListener { view ->
+                    val url = "http://www.example.com"
+                    val i = Intent(Intent.ACTION_VIEW)
+                    i.data = Uri.parse(it)
+                    startActivity(view.context, i, null)
+                }) }
+            }
 
             return PubContactsAdapter().also { it.items = items }
         }

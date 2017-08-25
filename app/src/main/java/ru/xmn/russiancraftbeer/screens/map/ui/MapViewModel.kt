@@ -37,6 +37,7 @@ sealed class MapState {
         val errorMessage: String
 
         init {
+            e.printStackTrace()
             errorMessage = "Something went wrong"
         }
     }
