@@ -43,7 +43,7 @@ import static android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP;
  */
 public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLayout.Behavior<V> {
 
-    private int minChange = 15;
+    private int minChange = 10;
 
     /**
      * Callback for monitoring events about bottom sheets.

@@ -4,6 +4,7 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProvider
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import ru.xmn.russiancraftbeer.application.App
 import ru.xmn.russiancraftbeer.screens.map.bl.PubUseCase
@@ -15,6 +16,7 @@ class PubViewModel(val nid: String) : ViewModel() {
     @Inject
     lateinit var pubUseCase: PubUseCase
     val mapState: MutableLiveData<PubState> = MutableLiveData()
+    private var subscribe: Disposable? = null
 
     init {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
@@ -23,7 +25,8 @@ class PubViewModel(val nid: String) : ViewModel() {
     }
 
     private fun clickPub(id: String) {
-        pubUseCase.getPub(id)
+        subscribe?.dispose()
+        subscribe = pubUseCase.getPub(id)
                 .map<PubState> { PubState.Success(it) }
                 .startWith(PubState.Loading())
                 .onErrorReturn { PubState.Error(it) }
@@ -36,7 +39,6 @@ class PubViewModel(val nid: String) : ViewModel() {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return PubViewModel(nid) as T
         }
-
     }
 }
 

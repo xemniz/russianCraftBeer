@@ -54,7 +54,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
             ViewCompat.setNestedScrollingEnabled(nestedScrollView, true)
             pubTitle.text = pubMapDto.title
             pubType.text = pubMapDto.type
-            pubLogo.loadUrl(pubMapDto.field_logo ?: "")
+            pubLogo.loadUrl(pubMapDto.field_logo ?: "", pubLogoProgressBar)
 
             val pubViewModel = pubViewModelFactory(pubMapDto)
             pubViewModel.mapState.observe(activity, Observer {
@@ -80,7 +80,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
             TransitionManager.beginDelayedTransition(layout)
         }
         layout.apply {
-            pubCard.setOnClickListener{itemClick(position)}
+            pubCollapsedCard.setOnClickListener{itemClick(position)}
             pubDescription.text = pub.body
             pubContacts.layoutManager = LinearLayoutManager(activity)
             pubContacts.adapter = PubContactsAdapter.from(pub.address, pub.map!!, pub.phones, pub.site)

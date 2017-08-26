@@ -8,7 +8,7 @@ import ru.xmn.russiancraftbeer.application.di.ApplicationComponent
 import ru.xmn.russiancraftbeer.application.di.ApplicationModule
 import ru.xmn.russiancraftbeer.application.di.DaggerApplicationComponent
 
-public class App : Application() {
+class App : Application() {
 
     companion object {
         lateinit var component: ApplicationComponent
