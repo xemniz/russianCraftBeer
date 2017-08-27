@@ -27,6 +27,10 @@ data class MapPoint(val type: String, val coordinates: List<Double>) {
     companion object {
         fun from(l: LatLng) = MapPoint("", listOf(l.longitude, l.latitude))
     }
+
+    fun toLatLng(): LatLng {
+        return LatLng(coordinates[1], coordinates[0])
+    }
 }
 
 open class PubMapRealm() : RealmObject() {

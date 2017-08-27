@@ -8,6 +8,7 @@ android {
     compileSdkVersion 26
     buildToolsVersion "26.0.0"
     defaultConfig {
+        multiDexEnabled true
         applicationId "ru.xmn.russiancraftbeer"
         minSdkVersion 19
         targetSdkVersion 26
@@ -96,6 +97,8 @@ dependencies {
     implementation "biz.laenger.android:vpbs:0.0.4"
     implementation 'jp.wasabeef:glide-transformations:2.0.2'
 
+    implementation 'com.google.maps.android:android-maps-utils:0.5'
+    implementation 'com.android.support:multidex:1.0.2'
 }
 
 apply plugin: 'com.google.gms.google-services'

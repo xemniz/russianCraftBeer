@@ -8,19 +8,19 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.maps.android.clustering.ClusterItem
+import com.google.maps.android.clustering.ClusterManager
+import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import rx.subjects.BehaviorSubject
-import android.util.TypedValue
-import android.widget.RelativeLayout
-
-
 
 
 class MapViewManager(val activity: AppCompatActivity) {
     private lateinit var map: GoogleMap
     private lateinit var delegate: Delegate
+    private lateinit var clusterManager: ClusterManager<PubClusterItem>
+    private lateinit var pubClusterRenderer: PubClusterRenderer
 
     private val itemsSubjects = BehaviorSubject.create<MapItemsState>()
 
@@ -48,7 +48,11 @@ class MapViewManager(val activity: AppCompatActivity) {
             showPubsOnMap(it)
             if (!alreadyGotFirstState) alreadyGotFirstState = true
         }
-
+        clusterManager = ClusterManager(activity, map)
+        map.setOnCameraIdleListener(clusterManager)
+        map.setOnMarkerClickListener(clusterManager)
+        map.setOnInfoWindowClickListener(clusterManager)
+        pubClusterRenderer = PubClusterRenderer(activity, map, clusterManager)
     }
 
     @SuppressLint("MissingPermission")
@@ -56,14 +60,14 @@ class MapViewManager(val activity: AppCompatActivity) {
         map.isMyLocationEnabled = true
     }
 
-    private val markers: MutableList<Marker> = ArrayList()
+    private val pubClusterItems: MutableList<PubClusterItem> = ArrayList()
     private var currentMarker: Marker? = null
 
     //region api
     fun pushMarkerPosition(position: Int) {
         if (!alreadyGotFirstState) return
 
-        selectMarker(markers[position])
+        selectMarker(pubClusterItems[position])
     }
 
     private var alreadyGotFirstState: Boolean = false
@@ -73,7 +77,7 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 
     fun isMarkerInBounds(position: Int): Boolean {
-        val marker: Marker = markers[position]
+        val marker: Marker = pubClusterRenderer.getMarker(pubClusterItems[position])
         val bounds = map.getProjection().getVisibleRegion().latLngBounds
         return bounds.contains(marker.position)
     }
@@ -83,24 +87,30 @@ class MapViewManager(val activity: AppCompatActivity) {
         val (items, position) = mapItemsState
 
         clearMap()
-        items.forEach({
-            val pub = LatLng(it.map!![0].coordinates[1], it.map[0].coordinates[0])
-            val marker = map.addMarker(MarkerOptions().position(pub).title(it.title))
-            marker.tag = it.uniqueTag
-            markers += marker
-            map.setOnMarkerClickListener(this::markerClick)
-        })
+        pubClusterItems += items.map { PubClusterItem(it) }
+        clusterManager.addItems(pubClusterItems)
+        clusterManager.renderer = pubClusterRenderer
+        clusterManager.setOnClusterItemClickListener { item -> markerClick(item)}
+//        items.forEach({
+//            val pub = LatLng(it.map!![0].coordinates[1], it.map[0].coordinates[0])
+//            val marker = map.addMarker(MarkerOptions().position(pub).title(it.title))
+//            marker.tag = it.uniqueTag
+//            pubClusterItems += marker
+//        })
 
-        selectMarker(markers[position])
+        selectMarker(pubClusterItems[position])
     }
 
     private fun clearMap() {
         map.clear()
         currentMarker = null
-        markers.clear()
+        pubClusterItems.clear()
     }
 
-    private fun selectMarker(marker: Marker) {
+    private fun selectMarker(pubClusterItem: PubClusterItem) {
+        val marker = pubClusterRenderer.getMarker(pubClusterItem)
+        if (marker == null) return
+        
         highlightMarker(marker)
 
         map.setOnCameraMoveStartedListener(null)
@@ -128,9 +138,9 @@ class MapViewManager(val activity: AppCompatActivity) {
         currentMarker = marker
     }
 
-    private fun markerClick(m: Marker): Boolean {
-        selectMarker(m)
-        delegate.markerClick(m.tag as String)
+    private fun markerClick(pubClusterItem: PubClusterItem): Boolean {
+        selectMarker(pubClusterItem)
+        delegate.markerClick(pubClusterItem.pubMapDto.uniqueTag)
         return true
     }
 
@@ -141,4 +151,25 @@ class MapViewManager(val activity: AppCompatActivity) {
         fun markerClick(tag: String)
         fun myPositionClick()
     }
+}
+
+class PubClusterRenderer(activity: AppCompatActivity, map: GoogleMap, clusterManager: ClusterManager<PubClusterItem>) : DefaultClusterRenderer<PubClusterItem>(activity, map, clusterManager) {
+
+}
+
+class PubClusterItem(val pubMapDto: PubMapDto) : ClusterItem {
+    override fun getSnippet(): String {
+        return ""
+    }
+
+    override fun getTitle(): String {
+        return ""
+    }
+
+    override fun getPosition(): LatLng {
+        return pubMapDto.map!![0].toLatLng()
+    }
+
+
+
 }
