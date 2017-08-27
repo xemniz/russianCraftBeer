@@ -77,9 +77,8 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 
     fun isMarkerInBounds(position: Int): Boolean {
-        val marker: Marker = pubClusterRenderer.getMarker(pubClusterItems[position])
         val bounds = map.getProjection().getVisibleRegion().latLngBounds
-        return bounds.contains(marker.position)
+        return bounds.contains(pubClusterItems[position].position)
     }
     //endregion
 
@@ -108,17 +107,17 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 
     private fun selectMarker(pubClusterItem: PubClusterItem) {
-        val marker = pubClusterRenderer.getMarker(pubClusterItem)
-        if (marker == null) return
-        
-        highlightMarker(marker)
+
 
         map.setOnCameraMoveStartedListener(null)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                marker.position.run { LatLng(this.latitude - .0025, this.longitude) },
+                pubClusterItem.position.run { LatLng(this.latitude - .0025, this.longitude) },
                 15f
         ), object : GoogleMap.CancelableCallback {
             override fun onFinish() {
+                val marker = pubClusterRenderer.getMarker(pubClusterItem)
+                marker?.let { highlightMarker(marker) }
+
                 map.setOnCameraMoveStartedListener { delegate.cameraMove() }
             }
 
@@ -129,9 +128,13 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 
     private fun highlightMarker(marker: Marker) {
-        currentMarker?.apply {
-            setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-            zIndex = 0f
+        try {
+            currentMarker?.apply {
+                setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                zIndex = 0f
+            }
+        } catch(e: Exception) {
+            currentMarker = null
         }
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
         marker.zIndex = 1f
