@@ -23,12 +23,14 @@ android {
     }
     packagingOptions {
         exclude 'META-INF/rxjava.properties'
+        exclude 'rx'
     }
 }
 
 repositories {
     maven { url "https://raw.github.com/laenger/maven-releases/master/releases" }
     maven { url "https://jitpack.io" }
+    jcenter()
 }
 
 dependencies {
@@ -56,6 +58,7 @@ dependencies {
     implementation "com.android.support:transition:$supportLib"
     implementation "com.android.support:support-dynamic-animation:$supportLib"
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+    implementation 'com.google.firebase:firebase-core:11.2.0'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.0'
     androidTestImplementation 'com.android.support.test:runner:1.0.0'
     androidTestImplementation 'org.mockito:mockito-core:2.8.47'
@@ -91,4 +94,8 @@ dependencies {
     implementation 'com.github.vicpinm:krealmextensions:1.1.1'
 
     implementation "biz.laenger.android:vpbs:0.0.4"
+    implementation 'jp.wasabeef:glide-transformations:2.0.2'
+
 }
+
+apply plugin: 'com.google.gms.google-services'

@@ -42,7 +42,7 @@ class PubViewModel(val nid: String) : ViewModel() {
     }
 }
 
-sealed class PubState() {
+sealed class PubState {
     class Success(val pub: PubDto) : PubState()
     class Error(private val e: Throwable) : PubState() {
         val errorMessage: String

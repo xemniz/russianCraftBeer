@@ -12,6 +12,10 @@ import com.google.android.gms.maps.model.MarkerOptions
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import rx.subjects.BehaviorSubject
+import android.util.TypedValue
+import android.widget.RelativeLayout
+
+
 
 
 class MapViewManager(val activity: AppCompatActivity) {
@@ -31,14 +35,20 @@ class MapViewManager(val activity: AppCompatActivity) {
 
     private fun mapReady(it: GoogleMap) {
         map = it
-        map.setOnMapClickListener { delegate.mapClick() }
+        map.setOnMapClickListener {
+            delegate.mapClick()
+        }
         map.getUiSettings().setZoomControlsEnabled(true)
         delegate.requestPermission()
-        map.setOnMyLocationButtonClickListener { delegate.myPositionClick(); return@setOnMyLocationButtonClickListener false }
+        map.setOnMyLocationButtonClickListener {
+            delegate.myPositionClick()
+            return@setOnMyLocationButtonClickListener false
+        }
         itemsSubjects.subscribe {
             showPubsOnMap(it)
             if (!alreadyGotFirstState) alreadyGotFirstState = true
         }
+
     }
 
     @SuppressLint("MissingPermission")

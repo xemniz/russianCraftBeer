@@ -39,7 +39,7 @@ class MapViewModel : ViewModel() {
         subscribe?.dispose()
 
         subscribe = mapListUseCase.getPabsForMap(mapPoint)
-                .map<MapState> { MapState.Success(it, 0) }
+                .map<MapState> { MapState.Success(it, currentItemPosition) }
                 .startWith(MapState.Loading())
                 .onErrorReturn { MapState.Error(it) }
                 .subscribeOn(Schedulers.io())
@@ -50,8 +50,6 @@ class MapViewModel : ViewModel() {
     //request location
     private lateinit var googleApiClient: GoogleApiClient
     private lateinit var locationRequest: LocationRequest
-
-
     private var lastLocation: LatLng = LatLng(55.751244, 37.618423) // moscow by default
 
     fun onPermissionGranted() {

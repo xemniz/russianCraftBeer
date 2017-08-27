@@ -1,16 +1,22 @@
 package ru.xmn.russiancraftbeer.screens.map.ui
 
 import android.arch.lifecycle.Observer
+import android.graphics.Color
+import android.support.transition.Fade
+import android.support.transition.TransitionManager
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewCompat
 import android.support.v7.widget.LinearLayoutManager
-import android.transition.TransitionManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import kotlinx.android.synthetic.main.pub_sheet.view.*
 import org.jetbrains.anko.toast
 import ru.xmn.common.extensions.loadUrl
+import ru.xmn.common.transformations.BlurTransformation
+import ru.xmn.common.transformations.RoundedCornersTransformation
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.services.beer.PubDto
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
@@ -22,6 +28,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
 
     var items by Delegates.observable<List<PubMapDto>>(emptyList(), onChange = { _, _, value -> notifyDataSetChanged() })
     var offset = 0f
+    var observers: MutableMap<String, Observer<PubState>> = HashMap()
 
     override fun isViewFromObject(view: View?, `object`: Any?): Boolean {
         return view === `object`
@@ -45,8 +52,12 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
         return layout;
     }
 
-    override fun destroyItem(collection: ViewGroup, position: Int, view: Any) {
-        collection.removeView(view as View)
+    override fun destroyItem(viewGroup: ViewGroup, position: Int, view: Any) {
+        val pubViewModel = pubViewModelFactory(items[position])
+        val tag = items[position].uniqueTag
+        pubViewModel.mapState.removeObserver(observers.get(tag))
+        observers.remove(tag)
+        viewGroup.removeView(view as View)
     }
 
     private fun bind(layout: View, pubMapDto: PubMapDto, position: Int) {
@@ -54,10 +65,15 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
             ViewCompat.setNestedScrollingEnabled(nestedScrollView, true)
             pubTitle.text = pubMapDto.title
             pubType.text = pubMapDto.type
-            pubLogo.loadUrl(pubMapDto.field_logo ?: "", pubLogoProgressBar)
+            pubLogo.loadUrl(pubMapDto.field_logo ?: "", pubLogoProgressBar,
+                    transformations = listOf(RoundedCornersTransformation(pubLogoBack.context, 5, 0, RoundedCornersTransformation.CornerType.ALL)))
+            pubLogoBack.loadUrl(
+                    pubMapDto.field_logo ?: "",
+                    transformations = listOf(BlurTransformation(pubLogoBack.context))
+            )
 
             val pubViewModel = pubViewModelFactory(pubMapDto)
-            pubViewModel.mapState.observe(activity, Observer {
+            val observer = Observer<PubState> {
                 when {
                     it is PubState.Loading -> {
                         progressBarTopLayout.visibility = View.VISIBLE
@@ -71,16 +87,27 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
                         activity.toast(it.errorMessage)
                     }
                 }
-            })
+            }
+            observers.put(items[position].uniqueTag, observer)
+            pubViewModel.mapState.observe(activity, observer)
         }
     }
 
     fun bindPub(layout: View, pub: PubDto, position: Int) {
         (layout as ViewGroup?)?.let {
-            TransitionManager.beginDelayedTransition(layout)
+            val transition = Fade()
+                    .addTarget(layout.pubContacts)
+                    .addTarget(layout.pubDescription)
+                    .addTarget(layout.progressBarTopLayout)
+            TransitionManager.beginDelayedTransition(layout, transition)
         }
         layout.apply {
-            pubCollapsedCard.setOnClickListener{itemClick(position)}
+            pubContacts.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            pubDescription.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            progressBarTopLayout.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
+            pubLogo.setOnClickListener { itemClick(position) }
+            topPanelTextBack.setOnClickListener { itemClick(position) }
             pubDescription.text = pub.body
             pubContacts.layoutManager = LinearLayoutManager(activity)
             pubContacts.adapter = PubContactsAdapter.from(pub.address, pub.map!!, pub.phones, pub.site)
