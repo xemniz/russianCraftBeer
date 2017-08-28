@@ -14,6 +14,7 @@ import com.google.android.gms.maps.model.LatLng
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import ru.xmn.common.extensions.distanceTo
 import ru.xmn.russiancraftbeer.application.App
 import ru.xmn.russiancraftbeer.screens.map.bl.MapListUseCase
 import ru.xmn.russiancraftbeer.screens.map.di.MapModule
@@ -89,7 +90,6 @@ class MapViewModel : ViewModel() {
                 .flushLocations(googleApiClient)
     }
 
-
     fun buildGoogleApiClient() {
         locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
@@ -107,12 +107,6 @@ class MapViewModel : ViewModel() {
             return PubViewModel(nid) as T
         }
     }
-}
-
-private fun LatLng.distanceTo(anotherLocation: LatLng): Float {
-    val l1 = Location("1").also { location -> location.latitude = this.latitude; location.longitude = this.longitude }
-    val l2 = Location("2").also { location -> location.latitude = anotherLocation.latitude; location.longitude = anotherLocation.longitude }
-    return l1.distanceTo(l2)
 }
 
 sealed class MapState {

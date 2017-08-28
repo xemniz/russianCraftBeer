@@ -8,6 +8,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
@@ -89,14 +90,7 @@ class MapViewManager(val activity: AppCompatActivity) {
         pubClusterItems += items.map { PubClusterItem(it) }
         clusterManager.addItems(pubClusterItems)
         clusterManager.renderer = pubClusterRenderer
-        clusterManager.setOnClusterItemClickListener { item -> markerClick(item)}
-//        items.forEach({
-//            val pub = LatLng(it.map!![0].coordinates[1], it.map[0].coordinates[0])
-//            val marker = map.addMarker(MarkerOptions().position(pub).title(it.title))
-//            marker.tag = it.uniqueTag
-//            pubClusterItems += marker
-//        })
-
+        clusterManager.setOnClusterItemClickListener { item -> markerClick(item) }
         selectMarker(pubClusterItems[position])
     }
 
@@ -107,7 +101,10 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 
     private fun selectMarker(pubClusterItem: PubClusterItem) {
+        pubClusterRenderer.selectedClusterItem = pubClusterItem
 
+        dropPreviousMarkerHighlight()
+        pubClusterRenderer.getMarker(pubClusterItem)?.let { highlightMarker(it) }
 
         map.setOnCameraMoveStartedListener(null)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
@@ -115,8 +112,7 @@ class MapViewManager(val activity: AppCompatActivity) {
                 15f
         ), object : GoogleMap.CancelableCallback {
             override fun onFinish() {
-                val marker = pubClusterRenderer.getMarker(pubClusterItem)
-                marker?.let { highlightMarker(marker) }
+                pubClusterRenderer.getMarker(pubClusterItem)?.let { highlightMarker(it) }
 
                 map.setOnCameraMoveStartedListener { delegate.cameraMove() }
             }
@@ -128,17 +124,20 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 
     private fun highlightMarker(marker: Marker) {
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+        marker.zIndex = 1f
+        currentMarker = marker
+    }
+
+    private fun dropPreviousMarkerHighlight() {
         try {
             currentMarker?.apply {
                 setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
                 zIndex = 0f
             }
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             currentMarker = null
         }
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-        marker.zIndex = 1f
-        currentMarker = marker
     }
 
     private fun markerClick(pubClusterItem: PubClusterItem): Boolean {
@@ -156,11 +155,35 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 }
 
-class PubClusterRenderer(activity: AppCompatActivity, map: GoogleMap, clusterManager: ClusterManager<PubClusterItem>) : DefaultClusterRenderer<PubClusterItem>(activity, map, clusterManager) {
+class PubClusterRenderer(val activity: AppCompatActivity,
+                         val map: GoogleMap,
+                         clusterManager: ClusterManager<PubClusterItem>)
+    : DefaultClusterRenderer<PubClusterItem>(activity, map, clusterManager) {
+    var selectedClusterItem: PubClusterItem? = null
+
+    override fun getColor(clusterSize: Int): Int {
+        return activity.resources.getColor(R.color.colorAccent)
+    }
+
+    override fun onBeforeClusterItemRendered(item: PubClusterItem, markerOptions: MarkerOptions) {
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.pub_marker))
+        super.onBeforeClusterItemRendered(item, markerOptions)
+
+    }
+
+    override fun onClusterItemRendered(clusterItem: PubClusterItem?, marker: Marker?) {
+        super.onClusterItemRendered(clusterItem, marker)
+        if (clusterItem == selectedClusterItem){
+            marker?.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+            marker?.zIndex = 1f
+        }
+    }
+
 
 }
 
 class PubClusterItem(val pubMapDto: PubMapDto) : ClusterItem {
+
     override fun getSnippet(): String {
         return ""
     }
@@ -172,7 +195,5 @@ class PubClusterItem(val pubMapDto: PubMapDto) : ClusterItem {
     override fun getPosition(): LatLng {
         return pubMapDto.map!![0].toLatLng()
     }
-
-
 
 }
