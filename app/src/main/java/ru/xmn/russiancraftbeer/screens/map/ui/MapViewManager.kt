@@ -9,6 +9,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
@@ -36,6 +37,11 @@ class MapViewManager(val activity: AppCompatActivity) {
 
     private fun mapReady(it: GoogleMap) {
         map = it
+        clusterManager = ClusterManager(activity, map)
+        pubClusterRenderer = PubClusterRenderer(activity, map, clusterManager)
+        clusterManager.renderer = pubClusterRenderer
+        clusterManager.setOnClusterItemClickListener { markerClick(it) }
+
         map.setOnMapClickListener {
             delegate.mapClick()
         }
@@ -45,15 +51,28 @@ class MapViewManager(val activity: AppCompatActivity) {
             delegate.myPositionClick()
             return@setOnMyLocationButtonClickListener false
         }
+        map.setOnCameraIdleListener(clusterManager)
+        map.setOnMarkerClickListener {
+            return@setOnMarkerClickListener when {
+                (it==currentMarkerHighLight || it == currentMarkerItem) && currentItem != null ->
+                    markerClick(currentItem!!)
+                else ->
+                    clusterManager.onMarkerClick(it)
+            }
+        }
+        map.setOnInfoWindowClickListener(clusterManager)
+        clusterManager.setOnClusterClickListener({ cluster ->
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                    cluster.getPosition(), Math.floor((map.cameraPosition.zoom + 1).toDouble()).toFloat()), 300,
+                    null)
+            true
+        })
+        map.setOnCameraMoveListener { pubClusterRenderer.zoom = map.cameraPosition.zoom }
+
         itemsSubjects.subscribe {
             showPubsOnMap(it)
             if (!alreadyGotFirstState) alreadyGotFirstState = true
         }
-        clusterManager = ClusterManager(activity, map)
-        map.setOnCameraIdleListener(clusterManager)
-        map.setOnMarkerClickListener(clusterManager)
-        map.setOnInfoWindowClickListener(clusterManager)
-        pubClusterRenderer = PubClusterRenderer(activity, map, clusterManager)
     }
 
     @SuppressLint("MissingPermission")
@@ -62,7 +81,9 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 
     private val pubClusterItems: MutableList<PubClusterItem> = ArrayList()
-    private var currentMarker: Marker? = null
+    private var currentMarkerHighLight: Marker? = null
+    private var currentMarkerItem: Marker? = null
+    var currentItem: PubClusterItem? = null
 
     //region api
     fun pushMarkerPosition(position: Int) {
@@ -89,22 +110,20 @@ class MapViewManager(val activity: AppCompatActivity) {
         clearMap()
         pubClusterItems += items.map { PubClusterItem(it) }
         clusterManager.addItems(pubClusterItems)
-        clusterManager.renderer = pubClusterRenderer
-        clusterManager.setOnClusterItemClickListener { item -> markerClick(item) }
         selectMarker(pubClusterItems[position])
     }
 
     private fun clearMap() {
         map.clear()
-        currentMarker = null
+        currentMarkerHighLight = null
         pubClusterItems.clear()
     }
 
     private fun selectMarker(pubClusterItem: PubClusterItem) {
-        pubClusterRenderer.selectedClusterItem = pubClusterItem
-
         dropPreviousMarkerHighlight()
-        pubClusterRenderer.getMarker(pubClusterItem)?.let { highlightMarker(it) }
+
+        currentItem = pubClusterItem
+        highlightMarker(pubClusterItem)
 
         map.setOnCameraMoveStartedListener(null)
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
@@ -112,7 +131,6 @@ class MapViewManager(val activity: AppCompatActivity) {
                 15f
         ), object : GoogleMap.CancelableCallback {
             override fun onFinish() {
-                pubClusterRenderer.getMarker(pubClusterItem)?.let { highlightMarker(it) }
 
                 map.setOnCameraMoveStartedListener { delegate.cameraMove() }
             }
@@ -123,25 +141,47 @@ class MapViewManager(val activity: AppCompatActivity) {
         )
     }
 
-    private fun highlightMarker(marker: Marker) {
-        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-        marker.zIndex = 1f
-        currentMarker = marker
+    private fun highlightMarker(currentPubItem: PubClusterItem) {
+        currentMarkerItem = map.addMarker(MarkerOptions().apply {
+            position(currentPubItem.position)
+            when {
+                currentPubItem.pubMapDto.type == "Магазины" -> {
+                    zIndex(3f)
+                    icon(BitmapDescriptorFactory.fromResource(R.drawable.map_store_icon))
+                    anchor(.5f, .5f)
+                }
+                else -> {
+                    zIndex(3f)
+                    icon(BitmapDescriptorFactory.fromResource(R.drawable.map_pub_icon))
+                    anchor(.45f, .5f)
+                }
+            }
+        })
+        currentMarkerHighLight = map.addMarker(MarkerOptions().apply {
+            position(currentPubItem.position)
+            zIndex(2f)
+            icon(BitmapDescriptorFactory.fromResource(R.drawable.map_highlight))
+            anchor(.5f, .5f)
+            alpha(.6f)
+        })
+
+//        clusterManager.removeItem(currentPubItem)
+//        clusterManager.cluster()
     }
 
     private fun dropPreviousMarkerHighlight() {
+//        currentItem?.let {clusterManager.addItem(currentItem)}
+//        clusterManager.cluster()
         try {
-            currentMarker?.apply {
-                setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
-                zIndex = 0f
-            }
-        } catch (e: Exception) {
-            currentMarker = null
+            currentMarkerHighLight?.remove()
+            currentMarkerItem?.remove()
+        } catch(e: Exception) {
         }
     }
 
     private fun markerClick(pubClusterItem: PubClusterItem): Boolean {
         selectMarker(pubClusterItem)
+
         delegate.markerClick(pubClusterItem.pubMapDto.uniqueTag)
         return true
     }
@@ -159,30 +199,43 @@ class PubClusterRenderer(val activity: AppCompatActivity,
                          val map: GoogleMap,
                          clusterManager: ClusterManager<PubClusterItem>)
     : DefaultClusterRenderer<PubClusterItem>(activity, map, clusterManager) {
-    var selectedClusterItem: PubClusterItem? = null
+    var zoom: Float = 15f
 
     override fun getColor(clusterSize: Int): Int {
         return activity.resources.getColor(R.color.colorAccent)
     }
 
     override fun onBeforeClusterItemRendered(item: PubClusterItem, markerOptions: MarkerOptions) {
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.pub_marker))
+        when {
+            item.pubMapDto.type == "Магазины" -> {
+                markerOptions.zIndex(1f)
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.map_store_icon))
+                markerOptions.anchor(.5f, .5f)
+            }
+            else -> {
+                markerOptions.zIndex(1f)
+                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.map_pub_icon))
+                markerOptions.anchor(.45f, .5f)
+            }
+        }
         super.onBeforeClusterItemRendered(item, markerOptions)
-
     }
 
     override fun onClusterItemRendered(clusterItem: PubClusterItem?, marker: Marker?) {
         super.onClusterItemRendered(clusterItem, marker)
-        if (clusterItem == selectedClusterItem){
-            marker?.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-            marker?.zIndex = 1f
+    }
+
+    override fun shouldRenderAsCluster(cluster: Cluster<PubClusterItem>): Boolean {
+        return when {
+            zoom < 12 -> return true
+            else -> super.shouldRenderAsCluster(cluster)
         }
     }
 
 
 }
 
-class PubClusterItem(val pubMapDto: PubMapDto) : ClusterItem {
+class PubClusterItem(val pubMapDto: PubMapDto, val selected: Boolean = false) : ClusterItem {
 
     override fun getSnippet(): String {
         return ""
