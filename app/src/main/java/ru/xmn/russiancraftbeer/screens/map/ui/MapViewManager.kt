@@ -116,6 +116,9 @@ class MapViewManager(val activity: AppCompatActivity) {
     private fun clearMap() {
         map.clear()
         currentMarkerHighLight = null
+        currentItem = null
+        currentMarkerItem = null
+        currentMarkerHighLight = null
         pubClusterItems.clear()
     }
 
@@ -125,10 +128,12 @@ class MapViewManager(val activity: AppCompatActivity) {
         currentItem = pubClusterItem
         highlightMarker(pubClusterItem)
 
+
         map.setOnCameraMoveStartedListener(null)
+        val zoom = if (map.cameraPosition.zoom < 15) 15f else map.cameraPosition.zoom
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
                 pubClusterItem.position.run { LatLng(this.latitude - .0025, this.longitude) },
-                15f
+                zoom
         ), object : GoogleMap.CancelableCallback {
             override fun onFinish() {
 
@@ -164,7 +169,6 @@ class MapViewManager(val activity: AppCompatActivity) {
             anchor(.5f, .5f)
             alpha(.6f)
         })
-
 //        clusterManager.removeItem(currentPubItem)
 //        clusterManager.cluster()
     }
@@ -175,7 +179,7 @@ class MapViewManager(val activity: AppCompatActivity) {
         try {
             currentMarkerHighLight?.remove()
             currentMarkerItem?.remove()
-        } catch(e: Exception) {
+        } catch (e: Exception) {
         }
     }
 

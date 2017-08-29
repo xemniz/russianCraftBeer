@@ -55,6 +55,8 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         setupMap(savedInstanceState?.get(OFFSET) as Float? ?:0f)
         setupViewPager(savedInstanceState?.get(OFFSET) as Float? ?:0f)
         setupViewModel()
+        help_button.setOnClickListener { help_card.visibility = View.VISIBLE }
+        help_ok_button.setOnClickListener { help_card.visibility = View.GONE }
     }
 
     private fun setupMap(offset: Float) {

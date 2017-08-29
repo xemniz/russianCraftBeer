@@ -11,4 +11,9 @@
     <string name="ScrollingAppBarLayoutBehavior">ru.xmn.common.widgets.ScrollingAppBarLayoutBehavior</string>
     <string name="PubPagerAdapterTag">PubPagerAdapterTag</string>
     <string name="pub_sheet_card_tag">pubSheetCardTag</string>
+    <string name="help_text">При открытии приложения вы увидите ближайший к Вам паб или магазин.
+        Листните карточку влево и увидите следующий ближайший и т.д.
+        Кликните на кнопку определения местоположения, чтобы начать листать заново.
+        База заведений любезно предоставлена администратором сайта http://russiancraftbeer.ru/
+    </string>
 </resources>
