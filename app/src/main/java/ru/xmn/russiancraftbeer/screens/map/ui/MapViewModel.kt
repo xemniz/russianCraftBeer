@@ -5,7 +5,6 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProvider
 import android.content.Context
-import android.location.Location
 import android.os.Bundle
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.LocationRequest
@@ -28,10 +27,12 @@ class MapViewModel : ViewModel() {
     @Inject lateinit var context: Context
     val mapState: MutableLiveData<MapState> = MutableLiveData()
     var currentItemPosition: Int = 0
+    private var lastLocation: LatLng = LatLng(55.751244, 37.618423) // moscow by default
 
     init {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
         buildGoogleApiClient()
+        refresh()
     }
 
     private var subscribe: Disposable? = null
@@ -39,7 +40,7 @@ class MapViewModel : ViewModel() {
     fun request(mapPoint: MapPoint) {
         subscribe?.dispose()
 
-        subscribe = mapListUseCase.getPabsForMap(mapPoint)
+        subscribe = mapListUseCase.getPubsForMap(mapPoint)
                 .map<MapState> { MapState.Success(it, currentItemPosition) }
                 .startWith(MapState.Loading())
                 .onErrorReturn { MapState.Error(it) }
@@ -48,10 +49,13 @@ class MapViewModel : ViewModel() {
                 .subscribe({ mapState.value = it })
     }
 
+    fun refresh() {
+        request(MapPoint.from(lastLocation))
+    }
+
     //request location
     private lateinit var googleApiClient: GoogleApiClient
     private lateinit var locationRequest: LocationRequest
-    private var lastLocation: LatLng = LatLng(55.751244, 37.618423) // moscow by default
 
     fun onPermissionGranted() {
         if (googleApiClient.isConnected) {
@@ -106,13 +110,14 @@ class MapViewModel : ViewModel() {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return PubViewModel(nid) as T
         }
+
     }
 }
 
 sealed class MapState {
     class Success(val pubs: List<PubMapDto>, val currentItemPosition: Int) : MapState()
 
-    class Error(e: Throwable) : MapState() {
+    class Error(val e: Throwable) : MapState() {
         val errorMessage: String
 
         init {

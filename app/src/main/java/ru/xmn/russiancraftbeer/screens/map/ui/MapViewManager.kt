@@ -42,6 +42,7 @@ class MapViewManager(val activity: AppCompatActivity) {
         clusterManager.renderer = pubClusterRenderer
         clusterManager.setOnClusterItemClickListener { markerClick(it) }
 
+        map.setPadding(0,0,0, activity.resources.getDimension(R.dimen.view_pager_collapsed_height).toInt())
         map.setOnMapClickListener {
             delegate.mapClick()
         }
@@ -115,6 +116,7 @@ class MapViewManager(val activity: AppCompatActivity) {
 
     private fun clearMap() {
         map.clear()
+        clusterManager.clearItems()
         currentMarkerHighLight = null
         currentItem = null
         currentMarkerItem = null
@@ -132,7 +134,7 @@ class MapViewManager(val activity: AppCompatActivity) {
         map.setOnCameraMoveStartedListener(null)
         val zoom = if (map.cameraPosition.zoom < 15) 15f else map.cameraPosition.zoom
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                pubClusterItem.position.run { LatLng(this.latitude - .0025, this.longitude) },
+                pubClusterItem.position,
                 zoom
         ), object : GoogleMap.CancelableCallback {
             override fun onFinish() {

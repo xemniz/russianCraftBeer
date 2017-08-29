@@ -14,6 +14,7 @@ import android.os.PersistableBundle
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RelativeLayout
@@ -28,6 +29,7 @@ import ru.xmn.common.extensions.*
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior.*
 import ru.xmn.russiancraftbeer.R
+import javax.annotation.Resource
 
 
 class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
@@ -38,6 +40,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
     override fun getLifecycle(): LifecycleRegistry {
         return registry
     }
+
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     private lateinit var mapViewModel: MapViewModel
     private lateinit var behavior: ViewPagerBottomSheetBehavior<ViewPager>
@@ -52,17 +55,23 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
 
         setupToolbar()
         setupBehaviors()
-        setupMap(savedInstanceState?.get(OFFSET) as Float? ?:0f)
-        setupViewPager(savedInstanceState?.get(OFFSET) as Float? ?:0f)
+        setupMap(savedInstanceState?.get(OFFSET) as Float? ?: 0f)
+        setupViewPager(savedInstanceState?.get(OFFSET) as Float? ?: 0f)
         setupViewModel()
-        help_button.setOnClickListener { help_card.visibility = View.VISIBLE }
-        help_ok_button.setOnClickListener { help_card.visibility = View.GONE }
+        setClickListeners()
+    }
+
+    private fun setClickListeners() {
+        help_button.setOnClickListener { help_card.visible() }
+        help_ok_button.setOnClickListener { help_card.gone() }
+        map_error_button.setOnClickListener { mapViewModel.refresh() }
     }
 
     private fun setupMap(offset: Float) {
         mapViewManager.init(object : MapViewManager.Delegate {
             override fun mapClick() {
                 behavior.state = STATE_HIDDEN
+                help_card.gone()
             }
 
             override fun requestPermission() {
@@ -71,6 +80,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
 
             override fun cameraMove() {
                 behavior.state = STATE_HIDDEN
+                help_card.gone()
             }
 
             override fun markerClick(tag: String) {
@@ -86,10 +96,10 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
             }
         })
 
-        changMapAlpha(offset)
+        layoutOnSlide(offset)
 
         // Find ZoomControl view
-        @SuppressLint("ResourceType \"type\"")
+        @SuppressLint("ResourceType")
         val zoomControls = map.view!!.findViewById<View>(0x1)
 
         if (zoomControls != null && zoomControls.getLayoutParams() is RelativeLayout.LayoutParams) {
@@ -125,6 +135,19 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
             override fun onPageSelected(position: Int) {
                 mapViewModel.currentItemPosition = position
                 mapViewManager.pushMarkerPosition(position)
+
+                try {
+                    firebaseAnalytics.log(
+                            FirebaseAnalytics.Event.VIEW_ITEM,
+                            FirebaseAnalytics.Param.ITEM_ID to pubPagerAdapter.items[position].nid,
+                            FirebaseAnalytics.Param.ITEM_NAME to pubPagerAdapter.items[position].title!!,
+                            FirebaseAnalytics.Param.CONTENT_TYPE to pubPagerAdapter.items[position].type!!
+                    )
+                } catch(e: Exception) {
+                    Log.d("MapsActivity", "Log failed")
+                    e.printStackTrace()
+                }
+
             }
 
         })
@@ -151,13 +174,14 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         BottomSheetUtils.setupViewPager(bottomSheet)
         behavior.setBottomSheetCallback(object : ViewPagerBottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(sheet: View, newState: Int) {
-                println(newState)
+                if (newState == STATE_EXPANDED) help_button.invisible()
+                else help_button.visible()
             }
 
             override fun onSlide(sheet: View, slideOffset: Float) {
                 (viewPager.adapter as PubPagerAdapter).offset = slideOffset
 
-                changMapAlpha(slideOffset)
+                layoutOnSlide(slideOffset)
 
                 viewPager
                         .views
@@ -170,7 +194,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         behavior.state = STATE_COLLAPSED
     }
 
-    private fun changMapAlpha(slideOffset: Float) {
+    private fun layoutOnSlide(slideOffset: Float) {
         val contentAlpha = offsetedValue(slideOffset, 1f, 0f)
         map.view?.alpha = contentAlpha
     }
@@ -204,15 +228,18 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         mapViewModel.mapState.observe(this, Observer {
             when {
                 it is MapState.Loading -> {
-                    mapLoading.visibility = View.VISIBLE
+                    mapError.gone()
+                    mapLoading.visible()
                 }
                 it is MapState.Success -> {
-                    mapLoading.visibility = View.GONE
+                    mapError.gone()
+                    mapLoading.gone()
                     (viewPager.adapter as PubPagerAdapter).items = it.pubs
                     mapViewManager.pushItems(it.pubs, it.currentItemPosition)
                 }
                 it is MapState.Error -> {
-                    toast(it.errorMessage)
+                    mapLoading.gone()
+                    mapError.visible()
                 }
             }
         })
@@ -252,6 +279,8 @@ fun performOffset(activity: Activity, pubCardView: View, slideOffset: Float) {
     pubCardView.pubContacts.alpha = contentAlpha
     pubCardView.pubDescription.alpha = contentAlpha
     pubCardView.progressBarTopLayout.alpha = contentAlpha
+    pubCardView.pub_error_text.alpha = contentAlpha
+    pubCardView.pub_error_button.alpha = contentAlpha
 
     pubCardView.invalidate()
 

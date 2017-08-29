@@ -1,7 +1,6 @@
 package ru.xmn.russiancraftbeer.screens.map.ui
 
 import android.arch.lifecycle.Observer
-import android.graphics.Color
 import android.support.transition.Fade
 import android.support.transition.TransitionManager
 import android.support.v4.view.PagerAdapter
@@ -10,11 +9,11 @@ import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import kotlinx.android.synthetic.main.pub_sheet.view.*
-import org.jetbrains.anko.toast
+import ru.xmn.common.extensions.gone
+import ru.xmn.common.extensions.invisible
 import ru.xmn.common.extensions.loadUrl
+import ru.xmn.common.extensions.visible
 import ru.xmn.common.transformations.BlurTransformation
 import ru.xmn.common.transformations.RoundedCornersTransformation
 import ru.xmn.russiancraftbeer.R
@@ -76,15 +75,22 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
             val observer = Observer<PubState> {
                 when {
                     it is PubState.Loading -> {
-                        progressBarTopLayout.visibility = View.VISIBLE
-                        bindPub(layout, PubDto.empty(), position)
+                        progressBarTopLayout.visible()
+                        pub_error_button.gone()
+                        pub_error_text.gone()
+                        bindPub(layout, PubDto.empty(), position, View.OnClickListener{pubViewModel.refresh()})
                     }
                     it is PubState.Success -> {
-                        progressBarTopLayout.visibility = View.INVISIBLE
-                        bindPub(layout, it.pub, position)
+                        progressBarTopLayout.invisible()
+                        pub_error_button.gone()
+                        pub_error_text.gone()
+                        bindPub(layout, it.pub, position, View.OnClickListener{pubViewModel.refresh()})
                     }
                     it is PubState.Error -> {
-                        activity.toast(it.errorMessage)
+                        progressBarTopLayout.invisible()
+                        pub_error_button.visible()
+                        pub_error_text.visible()
+                        bindPub(layout, PubDto.empty(), position, View.OnClickListener{pubViewModel.refresh()})
                     }
                 }
             }
@@ -93,7 +99,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
         }
     }
 
-    fun bindPub(layout: View, pub: PubDto, position: Int) {
+    fun bindPub(layout: View, pub: PubDto, position: Int, errorClick: View.OnClickListener) {
         (layout as ViewGroup?)?.let {
             val transition = Fade()
                     .addTarget(layout.pubContacts)
@@ -102,6 +108,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
             TransitionManager.beginDelayedTransition(layout, transition)
         }
         layout.apply {
+            pub_error_button.setOnClickListener(errorClick)
             pubContacts.setLayerType(View.LAYER_TYPE_HARDWARE, null)
             pubDescription.setLayerType(View.LAYER_TYPE_HARDWARE, null)
             progressBarTopLayout.setLayerType(View.LAYER_TYPE_HARDWARE, null)

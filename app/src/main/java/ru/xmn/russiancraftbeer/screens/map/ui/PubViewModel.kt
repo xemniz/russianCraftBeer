@@ -21,6 +21,10 @@ class PubViewModel(val nid: String) : ViewModel() {
     init {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
 
+        refresh()
+    }
+
+    fun refresh() {
         clickPub(nid)
     }
 

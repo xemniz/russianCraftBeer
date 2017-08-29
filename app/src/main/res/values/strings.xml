@@ -16,4 +16,6 @@
         Кликните на кнопку определения местоположения, чтобы начать листать заново.
         База заведений любезно предоставлена администратором сайта http://russiancraftbeer.ru/
     </string>
+    <string name="try_again">Попробовать еще раз</string>
+    <string name="common_error">Не удалось загрузить.</string>
 </resources>
