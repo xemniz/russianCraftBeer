@@ -19,17 +19,16 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.RelativeLayout
 import biz.laenger.android.vpbs.BottomSheetUtils
+import com.crashlytics.android.Crashlytics
 import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.pub_sheet.view.*
 import lolodev.permissionswrapper.callback.OnRequestPermissionsCallBack
 import lolodev.permissionswrapper.wrapper.PermissionWrapper
-import org.jetbrains.anko.toast
 import ru.xmn.common.extensions.*
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior.*
 import ru.xmn.russiancraftbeer.R
-import javax.annotation.Resource
 
 
 class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
@@ -228,7 +227,6 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         mapViewModel.mapState.observe(this, Observer {
             when {
                 it is MapState.Loading -> {
-                    Crashlytics.logException(e);
                     mapError.gone()
                     mapLoading.visible()
                 }
@@ -239,6 +237,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
                     mapViewManager.pushItems(it.pubs, it.currentItemPosition)
                 }
                 it is MapState.Error -> {
+                    Crashlytics.logException(it.e);
                     mapLoading.gone()
                     mapError.visible()
                 }

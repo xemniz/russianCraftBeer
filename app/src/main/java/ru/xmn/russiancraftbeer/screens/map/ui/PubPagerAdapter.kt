@@ -9,6 +9,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.crashlytics.android.Crashlytics
 import kotlinx.android.synthetic.main.pub_sheet.view.*
 import ru.xmn.common.extensions.gone
 import ru.xmn.common.extensions.invisible
@@ -87,7 +88,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
                         bindPub(layout, it.pub, position, View.OnClickListener{pubViewModel.refresh()})
                     }
                     it is PubState.Error -> {
-                        Crashlytics.logException(e);
+                        Crashlytics.logException(it.e)
                         progressBarTopLayout.invisible()
                         pub_error_button.visible()
                         pub_error_text.visible()
