@@ -228,6 +228,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         mapViewModel.mapState.observe(this, Observer {
             when {
                 it is MapState.Loading -> {
+                    Crashlytics.logException(e);
                     mapError.gone()
                     mapLoading.visible()
                 }

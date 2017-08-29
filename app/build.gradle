@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'realm-android'
+apply plugin: 'io.fabric'
 
 android {
     compileSdkVersion 26
@@ -32,6 +33,7 @@ repositories {
     maven { url "https://raw.github.com/laenger/maven-releases/master/releases" }
     maven { url "https://jitpack.io" }
     jcenter()
+    maven { url 'https://maven.fabric.io/public' }
 }
 
 dependencies {
@@ -99,6 +101,10 @@ dependencies {
 
     implementation 'com.google.maps.android:android-maps-utils:0.5'
     implementation 'com.android.support:multidex:1.0.2'
+
+    implementation('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') {
+        transitive = true;
+    }
 }
 
 apply plugin: 'com.google.gms.google-services'

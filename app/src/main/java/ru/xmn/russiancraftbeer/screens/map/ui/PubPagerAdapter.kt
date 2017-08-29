@@ -87,6 +87,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
                         bindPub(layout, it.pub, position, View.OnClickListener{pubViewModel.refresh()})
                     }
                     it is PubState.Error -> {
+                        Crashlytics.logException(e);
                         progressBarTopLayout.invisible()
                         pub_error_button.visible()
                         pub_error_text.visible()

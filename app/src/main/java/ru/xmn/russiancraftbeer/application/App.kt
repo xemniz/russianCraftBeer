@@ -7,6 +7,10 @@ import ru.xmn.russiancraftbeer.BuildConfig
 import ru.xmn.russiancraftbeer.application.di.ApplicationComponent
 import ru.xmn.russiancraftbeer.application.di.ApplicationModule
 import ru.xmn.russiancraftbeer.application.di.DaggerApplicationComponent
+import com.crashlytics.android.Crashlytics
+import io.fabric.sdk.android.Fabric
+
+
 
 class App : Application() {
 
@@ -18,6 +22,7 @@ class App : Application() {
         super.onCreate()
         initializeDagger()
         initializeRealm()
+        Fabric.with(this, Crashlytics())
     }
 
     private fun initializeRealm() {

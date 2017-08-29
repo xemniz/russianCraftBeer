@@ -7,6 +7,7 @@
          location permissions for the 'MyLocation' functionality. 
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".application.App"
@@ -36,6 +37,9 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="f7aa530d9841469c0d1d1f8e33656af1e94465cc" />
     </application>
 
 </manifest>
