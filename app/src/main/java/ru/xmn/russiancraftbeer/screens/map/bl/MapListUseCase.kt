@@ -9,13 +9,13 @@ import ru.xmn.russiancraftbeer.services.beer.PubRepository
 
 
 class MapListUseCase(private val repository: PubRepository) {
-    fun getPubsForMap(mapPoint: MapPoint): Flowable<List<PubMapDto>> {
+    fun getPubsForMap(location: LatLng): Flowable<List<PubMapDto>> {
         return repository.getPubListMap()
                 .map { allPubsToUnique(it) }
                 .map {
                     it.sortedWith(Comparator({
                         a, b ->
-                        comparePoints(mapPoint, a.map!![0], b.map!![0])
+                        comparePoints(MapPoint.from(location), a.map!![0], b.map!![0])
                     }))
                 }
     }

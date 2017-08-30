@@ -18,6 +18,9 @@ import java.util.concurrent.TimeUnit
 import android.support.test.espresso.Espresso
 import ElapsedTimeIdlingResource
 import android.support.test.espresso.IdlingResource
+import android.support.test.uiautomator.UiDevice
+import android.support.test.uiautomator.UiSelector
+import android.test.InstrumentationTestCase
 import ru.xmn.russiancraftbeer.screens.map.ui.MapsActivity
 
 
@@ -27,7 +30,7 @@ import ru.xmn.russiancraftbeer.screens.map.ui.MapsActivity
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 @RunWith(AndroidJUnit4::class)
-class ExampleInstrumentedTest {
+class ExampleInstrumentedTest{
     @Test
     fun useAppContext() {
         // Context of the app under test.
@@ -55,6 +58,31 @@ class ExampleInstrumentedTest {
         Espresso.registerIdlingResources(idlingResource)
 
         onView(withId(R.id.help_button)).perform(click())
+
+        Espresso.registerIdlingResources(idlingResource)
+
+        onView(withId(R.id.help_card)).check(matches(isDisplayed()))
+
+        Espresso.unregisterIdlingResources(idlingResource);
+    }
+
+    @Test
+    fun markerClick(){
+
+        var waitingTime = DateUtils.SECOND_IN_MILLIS * 5
+
+        IdlingPolicies.setMasterPolicyTimeout(
+                waitingTime * 2, TimeUnit.MILLISECONDS);
+        IdlingPolicies.setIdlingResourceTimeout(
+                waitingTime * 2, TimeUnit.MILLISECONDS);
+
+
+        val idlingResource = ElapsedTimeIdlingResource(waitingTime)
+        Espresso.registerIdlingResources(idlingResource)
+
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val marker = device.findObject(UiSelector().descriptionContains("МАЙ"))
+        marker.click()
 
         Espresso.registerIdlingResources(idlingResource)
 

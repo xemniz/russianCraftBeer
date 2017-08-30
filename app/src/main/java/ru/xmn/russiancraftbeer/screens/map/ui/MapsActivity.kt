@@ -44,7 +44,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
     private lateinit var mapViewModel: MapViewModel
     private lateinit var behavior: ViewPagerBottomSheetBehavior<ViewPager>
 
-    private val mapViewManager = MapViewManager(this)
+    val mapViewManager = MapViewManager(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -132,7 +132,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
             }
 
             override fun onPageSelected(position: Int) {
-                mapViewModel.currentItemPosition = position
+                mapViewModel.currentItemTag = position
                 mapViewManager.pushMarkerPosition(position)
 
                 try {

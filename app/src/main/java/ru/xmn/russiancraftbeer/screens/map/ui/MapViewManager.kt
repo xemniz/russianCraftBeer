@@ -248,7 +248,7 @@ class PubClusterItem(val pubMapDto: PubMapDto, val selected: Boolean = false) : 
     }
 
     override fun getTitle(): String {
-        return ""
+        return pubMapDto.title?:""
     }
 
     override fun getPosition(): LatLng {
