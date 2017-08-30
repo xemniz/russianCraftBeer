@@ -14,12 +14,17 @@ import khronos.Dates
 import khronos.days
 import khronos.hour
 import khronos.minus
+import android.text.format.DateUtils
+
+
 
 
 /**
  * Created by xmn on 19.08.2017.
  */
 class PubRepositoryTest {
+
+
     lateinit var testRealm: Realm
     lateinit var pubRepository: PubRepository
     val beerService: BeerService = object : BeerService {
