@@ -86,12 +86,12 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
                 behavior.state = STATE_COLLAPSED
                 val adapter = viewPager.adapter as PubPagerAdapter
                 val i = adapter.items.indexOfFirst { tag == it.uniqueTag }
-                viewPager.setCurrentItem(i, true)
+                mapViewModel.currentItemPosition = i
             }
 
             override fun myPositionClick() {
                 behavior.state = STATE_COLLAPSED
-                viewPager.setCurrentItem(0, true)
+                mapViewModel.currentItemPosition = 0
             }
         })
 
@@ -120,7 +120,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         val pubPagerAdapter = PubPagerAdapter(
                 this,
                 { s -> ViewModelProviders.of(this, PubViewModel.Factory(s.nid)).get(s.nid, PubViewModel::class.java) },
-                { clickOnItem(it) }
+                { clickOnItem() }
         )
         pubPagerAdapter.offset = offset
         viewPager.adapter = pubPagerAdapter
@@ -132,8 +132,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
             }
 
             override fun onPageSelected(position: Int) {
-                mapViewModel.currentItemTag = position
-                mapViewManager.pushMarkerPosition(position)
+                mapViewModel.currentItemPosition = position
 
                 try {
                     firebaseAnalytics.log(
@@ -152,10 +151,9 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         })
     }
 
-    private fun clickOnItem(position: Int) {
-        val inBounds: Boolean = mapViewManager.isMarkerInBounds(position)
+    private fun clickOnItem() {
+        val inBounds: Boolean = mapViewManager.isLocationInBounds()
         when {
-            !inBounds -> mapViewManager.pushMarkerPosition(position)
             inBounds && behavior.state != STATE_EXPANDED -> behavior.state = STATE_EXPANDED
             behavior.state == STATE_EXPANDED -> behavior.state = STATE_COLLAPSED
         }
@@ -225,6 +223,8 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
     private fun setupViewModel() {
         mapViewModel = ViewModelProviders.of(this).get(MapViewModel::class.java)
         mapViewModel.mapState.observe(this, Observer {
+            updateViewPager(it!!)
+            mapViewManager.updateMap(it)
             when {
                 it is MapState.Loading -> {
                     mapError.gone()
@@ -233,8 +233,8 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
                 it is MapState.Success -> {
                     mapError.gone()
                     mapLoading.gone()
-                    (viewPager.adapter as PubPagerAdapter).items = it.pubs
-                    mapViewManager.pushItems(it.pubs, it.currentItemPosition)
+
+
                 }
                 it is MapState.Error -> {
                     Crashlytics.logException(it.e);
@@ -243,6 +243,26 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
                 }
             }
         })
+    }
+
+    private var listUniqueId: String = ""
+
+    private fun updateViewPager(mapState: MapState) {
+        when {
+            mapState is MapState.Loading -> {
+            }
+            mapState is MapState.Success -> {
+                if (mapState.listUniqueId != listUniqueId) {
+                    (viewPager.adapter as PubPagerAdapter).items = mapState.pubs
+                    listUniqueId = mapState.listUniqueId
+                }
+                if (viewPager.currentItem != mapState.currentItemPosition)
+                    viewPager.setCurrentItem(mapState.currentItemPosition, true)
+            }
+            mapState is MapState.Error -> {
+                (viewPager.adapter as PubPagerAdapter).items = emptyList()
+            }
+        }
     }
 
     override fun onBackPressed() {

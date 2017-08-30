@@ -1,7 +1,10 @@
 package ru.xmn.russiancraftbeer.screens.map.ui
 
 import android.annotation.SuppressLint
-import android.arch.lifecycle.*
+import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.Transformations
+import android.arch.lifecycle.ViewModel
+import android.arch.lifecycle.ViewModelProvider
 import android.content.Context
 import com.google.android.gms.maps.model.LatLng
 import ru.xmn.russiancraftbeer.application.App
@@ -15,25 +18,34 @@ class MapViewModel : ViewModel() {
     @Inject lateinit var mapListUseCase: MapListUseCase
     @SuppressLint("StaticFieldLeak")
     @Inject lateinit var context: Context
-    val locationLiveData: LocationLiveData
+
+    private val mapStateFromNetwork: MapPubListLiveData
+    private val currentItemLiveData: CurrentPubItemLiveData = CurrentPubItemLiveData()
     val mapState: LiveData<MapState>
 
-    var currentItemTag: Int by Delegates.observable(0){
-        property, oldValue, newValue ->
+    var currentItemPosition: Int by Delegates.observable(0) {
+        _, _, newValue ->
+        currentItemLiveData.pushCurrentItemPosition(newValue)
     }
 
     init {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
-        locationLiveData = LocationLiveData(context)
-        mapState = Transformations.switchMap(locationLiveData,
-                { location: LatLng -> MapPubListLiveData(location, mapListUseCase) })
+        mapStateFromNetwork = MapPubListLiveData(context, mapListUseCase)
+
+        mapState = Transformations.switchMap(mapStateFromNetwork,
+                { mapState: MapState -> currentItemLiveData.pushNewState(mapState) })
+    }
+
+    fun onPermissionGranted() {
+        mapStateFromNetwork.connectAndSubscribeOnLocationChange()
     }
 
     fun refresh() {
-        locationLiveData.repeatLastLocation()
+        mapStateFromNetwork.repeatLastLocation()
     }
 
     class Factory(val nid: String) : ViewModelProvider.Factory {
+
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return PubViewModel(nid) as T
         }
@@ -42,7 +54,7 @@ class MapViewModel : ViewModel() {
 }
 
 sealed class MapState {
-    class Success(val pubs: List<PubMapDto>, val currentItemPosition: Int) : MapState()
+    class Success(val pubs: List<PubMapDto>, val currentItemPosition: Int, val listUniqueId: String) : MapState()
 
     class Error(val e: Throwable) : MapState() {
         val errorMessage: String

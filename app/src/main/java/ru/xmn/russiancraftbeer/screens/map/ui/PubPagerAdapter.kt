@@ -53,6 +53,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
     }
 
     override fun destroyItem(viewGroup: ViewGroup, position: Int, view: Any) {
+        if(items.isEmpty()) return
         val pubViewModel = pubViewModelFactory(items[position])
         val tag = items[position].uniqueTag
         pubViewModel.mapState.removeObserver(observers.get(tag))

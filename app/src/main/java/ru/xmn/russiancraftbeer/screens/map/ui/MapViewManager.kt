@@ -24,9 +24,7 @@ class MapViewManager(val activity: AppCompatActivity) {
     private lateinit var clusterManager: ClusterManager<PubClusterItem>
     private lateinit var pubClusterRenderer: PubClusterRenderer
 
-    private val itemsSubjects = BehaviorSubject.create<MapItemsState>()
-
-    data class MapItemsState(val items: List<PubMapDto>, val position: Int)
+    private val itemsSubjects = BehaviorSubject.create<MapState>()
 
     fun init(d: Delegate) {
         this.delegate = d
@@ -35,6 +33,8 @@ class MapViewManager(val activity: AppCompatActivity) {
         mapFragment.getMapAsync(this::mapReady)
     }
 
+    private var listUniqueId: String = ""
+
     private fun mapReady(it: GoogleMap) {
         map = it
         clusterManager = ClusterManager(activity, map)
@@ -42,8 +42,9 @@ class MapViewManager(val activity: AppCompatActivity) {
         clusterManager.renderer = pubClusterRenderer
         clusterManager.setOnClusterItemClickListener { markerClick(it) }
 
-        map.setPadding(0,0,0, activity.resources.getDimension(R.dimen.view_pager_collapsed_height).toInt())
+        map.setPadding(0, 0, 0, activity.resources.getDimension(R.dimen.view_pager_collapsed_height).toInt())
         map.setOnMapClickListener {
+            dropPreviousMarkerHighlight()
             delegate.mapClick()
         }
         map.getUiSettings().setZoomControlsEnabled(true)
@@ -63,17 +64,42 @@ class MapViewManager(val activity: AppCompatActivity) {
         }
         map.setOnInfoWindowClickListener(clusterManager)
         clusterManager.setOnClusterClickListener({ cluster ->
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                    cluster.getPosition(), Math.floor((map.cameraPosition.zoom + 1).toDouble()).toFloat()), 300,
-                    null)
+            dropPreviousMarkerHighlight()
+            mapZoomIn(cluster.getPosition(), 2f)
             true
         })
         map.setOnCameraMoveListener { pubClusterRenderer.zoom = map.cameraPosition.zoom }
 
         itemsSubjects.subscribe {
-            showPubsOnMap(it)
-            if (!alreadyGotFirstState) alreadyGotFirstState = true
+            when {
+                it is MapState.Loading -> {
+                }
+                it is MapState.Success -> {
+
+                    if (it.listUniqueId != listUniqueId) {
+                        showPubsOnMap(it.pubs)
+                        listUniqueId = it.listUniqueId
+                    }
+
+                    if (pubClusterItems.indexOf(currentItem) != it.currentItemPosition)
+                        selectMarker(pubClusterItems[it.currentItemPosition])
+
+                    val location = it.pubs[it.currentItemPosition].map!![0].toLatLng()
+                    if (isLocationInBounds(location))
+                        selectMarker(pubClusterItems[it.currentItemPosition])
+                }
+                it is MapState.Error -> {
+                    showPubsOnMap(emptyList())
+                    dropPreviousMarkerHighlight()
+                }
+            }
         }
+    }
+
+    private fun mapZoomIn(position: LatLng, zoom: Float) {
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                position, Math.floor((map.cameraPosition.zoom + zoom).toDouble()).toFloat()), 300,
+                null)
     }
 
     @SuppressLint("MissingPermission")
@@ -87,31 +113,20 @@ class MapViewManager(val activity: AppCompatActivity) {
     var currentItem: PubClusterItem? = null
 
     //region api
-    fun pushMarkerPosition(position: Int) {
-        if (!alreadyGotFirstState) return
-
-        selectMarker(pubClusterItems[position])
+    fun updateMap(mapState: MapState) {
+        itemsSubjects.onNext(mapState)
     }
 
-    private var alreadyGotFirstState: Boolean = false
-
-    fun pushItems(pubs: List<PubMapDto>, currentItemPosition: Int) {
-        itemsSubjects.onNext(MapItemsState(pubs, currentItemPosition))
-    }
-
-    fun isMarkerInBounds(position: Int): Boolean {
+    fun isLocationInBounds(location: LatLng? = currentItem?.position): Boolean {
         val bounds = map.getProjection().getVisibleRegion().latLngBounds
-        return bounds.contains(pubClusterItems[position].position)
+        return bounds.contains(location)
     }
     //endregion
 
-    private fun showPubsOnMap(mapItemsState: MapItemsState) {
-        val (items, position) = mapItemsState
-
+    private fun showPubsOnMap(items: List<PubMapDto>) {
         clearMap()
         pubClusterItems += items.map { PubClusterItem(it) }
         clusterManager.addItems(pubClusterItems)
-        selectMarker(pubClusterItems[position])
     }
 
     private fun clearMap() {
@@ -171,13 +186,9 @@ class MapViewManager(val activity: AppCompatActivity) {
             anchor(.5f, .5f)
             alpha(.6f)
         })
-//        clusterManager.removeItem(currentPubItem)
-//        clusterManager.cluster()
     }
 
     private fun dropPreviousMarkerHighlight() {
-//        currentItem?.let {clusterManager.addItem(currentItem)}
-//        clusterManager.cluster()
         try {
             currentMarkerHighLight?.remove()
             currentMarkerItem?.remove()
@@ -248,7 +259,7 @@ class PubClusterItem(val pubMapDto: PubMapDto, val selected: Boolean = false) : 
     }
 
     override fun getTitle(): String {
-        return pubMapDto.title?:""
+        return pubMapDto.title ?: ""
     }
 
     override fun getPosition(): LatLng {
