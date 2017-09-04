@@ -23,6 +23,7 @@ class MapViewManager(val activity: AppCompatActivity) {
     private lateinit var delegate: Delegate
     private lateinit var clusterManager: ClusterManager<PubClusterItem>
     private lateinit var pubClusterRenderer: PubClusterRenderer
+    val CLUSTERING_ZOOM = 12
 
     private val itemsSubjects = BehaviorSubject.create<MapState>()
 
@@ -38,7 +39,7 @@ class MapViewManager(val activity: AppCompatActivity) {
     private fun mapReady(it: GoogleMap) {
         map = it
         clusterManager = ClusterManager(activity, map)
-        pubClusterRenderer = PubClusterRenderer(activity, map, clusterManager)
+        pubClusterRenderer = PubClusterRenderer(activity, map, clusterManager, CLUSTERING_ZOOM)
         clusterManager.renderer = pubClusterRenderer
         clusterManager.setOnClusterItemClickListener { markerClick(it) }
 
@@ -56,7 +57,7 @@ class MapViewManager(val activity: AppCompatActivity) {
         map.setOnCameraIdleListener(clusterManager)
         map.setOnMarkerClickListener {
             return@setOnMarkerClickListener when {
-                (it==currentMarkerHighLight || it == currentMarkerItem) && currentItem != null ->
+                (it == currentMarkerHighLight || it == currentMarkerItem) && currentItem != null ->
                     markerClick(currentItem!!)
                 else ->
                     clusterManager.onMarkerClick(it)
@@ -68,7 +69,12 @@ class MapViewManager(val activity: AppCompatActivity) {
             mapZoomIn(cluster.getPosition(), 2f)
             true
         })
-        map.setOnCameraMoveListener { pubClusterRenderer.zoom = map.cameraPosition.zoom }
+        map.setOnCameraMoveListener {
+            val zoom = map.cameraPosition.zoom
+            pubClusterRenderer.current_zoom = zoom
+            if (zoom < CLUSTERING_ZOOM && currentMarkerItem != null)
+                dropPreviousMarkerHighlight()
+        }
 
         itemsSubjects.subscribe {
             when {
@@ -145,7 +151,6 @@ class MapViewManager(val activity: AppCompatActivity) {
         currentItem = pubClusterItem
         highlightMarker(pubClusterItem)
 
-
         map.setOnCameraMoveStartedListener(null)
         val zoom = if (map.cameraPosition.zoom < 15) 15f else map.cameraPosition.zoom
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
@@ -214,9 +219,9 @@ class MapViewManager(val activity: AppCompatActivity) {
 
 class PubClusterRenderer(val activity: AppCompatActivity,
                          val map: GoogleMap,
-                         clusterManager: ClusterManager<PubClusterItem>)
+                         clusterManager: ClusterManager<PubClusterItem>, val CLUSTERING_ZOOM: Int)
     : DefaultClusterRenderer<PubClusterItem>(activity, map, clusterManager) {
-    var zoom: Float = 15f
+    var current_zoom: Float = 15f
 
     override fun getColor(clusterSize: Int): Int {
         return activity.resources.getColor(R.color.colorAccent)
@@ -244,7 +249,7 @@ class PubClusterRenderer(val activity: AppCompatActivity,
 
     override fun shouldRenderAsCluster(cluster: Cluster<PubClusterItem>): Boolean {
         return when {
-            zoom < 12 -> return true
+            current_zoom < CLUSTERING_ZOOM -> return true
             else -> super.shouldRenderAsCluster(cluster)
         }
     }
@@ -252,7 +257,7 @@ class PubClusterRenderer(val activity: AppCompatActivity,
 
 }
 
-class PubClusterItem(val pubMapDto: PubMapDto, val selected: Boolean = false) : ClusterItem {
+class PubClusterItem(val pubMapDto: PubMapDto, var selected: Boolean = false) : ClusterItem {
 
     override fun getSnippet(): String {
         return ""
