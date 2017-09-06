@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">russianCraftBeer</string>
+    <string name="app_name">Craft beer Russia</string>
     <string name="title_activity_maps">Map</string>
 
     <string name="key_binding_default_toolbar_name">Modal-Toolbar-Title</string>

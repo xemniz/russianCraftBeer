@@ -107,7 +107,6 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
 
             // Align it to - parent top|left
             params.addRule(RelativeLayout.ALIGN_PARENT_TOP)
-//            params.addRule(RelativeLayout.ALIGN_PARENT_LEFT)
 
             // Update margins, set to 10dp
             val margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10f,
@@ -154,6 +153,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
     private fun clickOnItem() {
         val inBounds: Boolean = mapViewManager.isLocationInBounds()
         when {
+            !inBounds -> mapViewManager.animateToCurrentItem()
             inBounds && behavior.state != STATE_EXPANDED -> behavior.state = STATE_EXPANDED
             behavior.state == STATE_EXPANDED -> behavior.state = STATE_COLLAPSED
         }

@@ -51,6 +51,7 @@ class MapViewManager(val activity: AppCompatActivity) {
         map.getUiSettings().setZoomControlsEnabled(true)
         delegate.requestPermission()
         map.setOnMyLocationButtonClickListener {
+            mapZoomIn(map.cameraPosition.target, 15f)
             delegate.myPositionClick()
             return@setOnMyLocationButtonClickListener false
         }
@@ -87,7 +88,7 @@ class MapViewManager(val activity: AppCompatActivity) {
                         listUniqueId = it.listUniqueId
                     }
 
-                    if (pubClusterItems.indexOf(currentItem) != it.currentItemPosition)
+                    if (!itemIsSelected(it.currentItemPosition))
                         selectMarker(pubClusterItems[it.currentItemPosition])
 
                     val location = it.pubs[it.currentItemPosition].map!![0].toLatLng()
@@ -101,6 +102,8 @@ class MapViewManager(val activity: AppCompatActivity) {
             }
         }
     }
+
+    private fun itemIsSelected(it: Int) = pubClusterItems.indexOf(currentItem) == it && currentMarkerItem == null
 
     private fun mapZoomIn(position: LatLng, zoom: Float) {
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
@@ -158,7 +161,11 @@ class MapViewManager(val activity: AppCompatActivity) {
                 zoom
         ), object : GoogleMap.CancelableCallback {
             override fun onFinish() {
-
+                currentItem?.let {
+                    if (!itemIsSelected(pubClusterItems.indexOf(it)))
+                        dropPreviousMarkerHighlight()
+                    highlightMarker(it)
+                }
                 map.setOnCameraMoveStartedListener { delegate.cameraMove() }
             }
 
@@ -214,6 +221,12 @@ class MapViewManager(val activity: AppCompatActivity) {
         fun cameraMove()
         fun markerClick(tag: String)
         fun myPositionClick()
+    }
+
+    fun animateToCurrentItem() {
+        currentItem?.let {
+            selectMarker(it)
+        }
     }
 }
 
