@@ -1,4 +1,4 @@
-package ru.xmn.russiancraftbeer.screens.map.ui
+package ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel

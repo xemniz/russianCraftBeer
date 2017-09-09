@@ -1,4 +1,4 @@
-package ru.xmn.russiancraftbeer.screens.map.ui
+package ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel
 
 import android.arch.lifecycle.LiveData
 
@@ -10,11 +10,15 @@ class CurrentPubItemLiveData : LiveData<MapState>() {
         return this
     }
 
-    fun pushCurrentItemPosition (itemPosition: Int){
+    fun pushCurrentItemPosition (itemPosition: Int, focus: Focus = Focus.ON_ITEM){
         currentItemPosition = itemPosition
         if (value is MapState.Success){
             val lastSuccessMapState = value as MapState.Success
-            value = MapState.Success(lastSuccessMapState.pubs, currentItemPosition, lastSuccessMapState.listUniqueId)
+            value = MapState.Success(lastSuccessMapState.pubs, currentItemPosition, lastSuccessMapState.listUniqueId, focus)
         }
     }
+}
+
+enum class Focus {
+    ON_ITEM, ON_MY_LOCATION
 }

@@ -1,4 +1,4 @@
-package ru.xmn.russiancraftbeer.screens.map.ui
+package ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel
 
 import android.annotation.SuppressLint
 import android.arch.lifecycle.LiveData
@@ -6,10 +6,10 @@ import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProvider
 import android.content.Context
-import com.google.android.gms.maps.model.LatLng
 import ru.xmn.russiancraftbeer.application.App
 import ru.xmn.russiancraftbeer.screens.map.bl.MapListUseCase
 import ru.xmn.russiancraftbeer.screens.map.di.MapModule
+import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import javax.inject.Inject
 import kotlin.properties.Delegates
@@ -44,17 +44,13 @@ class MapViewModel : ViewModel() {
         mapStateFromNetwork.repeatLastLocation()
     }
 
-    class Factory(val nid: String) : ViewModelProvider.Factory {
-
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return PubViewModel(nid) as T
-        }
-
+    fun selectMyLocation() {
+        currentItemLiveData.pushCurrentItemPosition(0, Focus.ON_MY_LOCATION)
     }
 }
 
 sealed class MapState {
-    class Success(val pubs: List<PubMapDto>, val currentItemPosition: Int, val listUniqueId: String) : MapState()
+    class Success(val pubs: List<PubMapDto>, val itemNumberToSelect: Int, val listUniqueId: String, val focus: Focus = Focus.ON_ITEM) : MapState()
 
     class Error(val e: Throwable) : MapState() {
         val errorMessage: String

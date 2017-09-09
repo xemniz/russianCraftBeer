@@ -29,6 +29,10 @@ import ru.xmn.common.extensions.*
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior.*
 import ru.xmn.russiancraftbeer.R
+import ru.xmn.russiancraftbeer.screens.map.ui.map.MapViewManager
+import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapState
+import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapViewModel
+import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
 
 
 class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
@@ -91,7 +95,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
 
             override fun myPositionClick() {
                 behavior.state = STATE_COLLAPSED
-                mapViewModel.currentItemPosition = 0
+                mapViewModel.selectMyLocation()
             }
         })
 
@@ -151,7 +155,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
     }
 
     private fun clickOnItem() {
-        val inBounds: Boolean = mapViewManager.isLocationInBounds()
+        val inBounds: Boolean = mapViewManager.isCurrentItemVisibleInMap()
         when {
             !inBounds -> mapViewManager.animateToCurrentItem()
             inBounds && behavior.state != STATE_EXPANDED -> behavior.state = STATE_EXPANDED
@@ -256,8 +260,8 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
                     (viewPager.adapter as PubPagerAdapter).items = mapState.pubs
                     listUniqueId = mapState.listUniqueId
                 }
-                if (viewPager.currentItem != mapState.currentItemPosition)
-                    viewPager.setCurrentItem(mapState.currentItemPosition, true)
+                if (viewPager.currentItem != mapState.itemNumberToSelect)
+                    viewPager.setCurrentItem(mapState.itemNumberToSelect, true)
             }
             mapState is MapState.Error -> {
                 (viewPager.adapter as PubPagerAdapter).items = emptyList()

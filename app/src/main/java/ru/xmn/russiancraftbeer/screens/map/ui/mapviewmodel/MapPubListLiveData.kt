@@ -1,4 +1,4 @@
-package ru.xmn.russiancraftbeer.screens.map.ui
+package ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel
 
 import android.annotation.SuppressLint
 import android.arch.lifecycle.LiveData

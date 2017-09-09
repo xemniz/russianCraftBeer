@@ -18,6 +18,9 @@ import ru.xmn.common.extensions.visible
 import ru.xmn.common.transformations.BlurTransformation
 import ru.xmn.common.transformations.RoundedCornersTransformation
 import ru.xmn.russiancraftbeer.R
+import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubContactsAdapter
+import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubState
+import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
 import ru.xmn.russiancraftbeer.services.beer.PubDto
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
 import kotlin.properties.Delegates
@@ -63,7 +66,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
 
     private fun bind(layout: View, pubMapDto: PubMapDto, position: Int) {
         layout.apply {
-            ViewCompat.setNestedScrollingEnabled(nestedScrollView, true)
+            ViewCompat.setNestedScrollingEnabled(pubContacts, false)
             pubTitle.text = pubMapDto.title
             pubType.text = pubMapDto.type
             pubLogo.loadUrl(pubMapDto.field_logo ?: "", pubLogoProgressBar,
