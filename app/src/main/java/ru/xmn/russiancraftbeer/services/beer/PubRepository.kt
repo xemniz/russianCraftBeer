@@ -19,7 +19,17 @@ class PubRepository(val service: BeerService) {
                     if (it.isEmpty() || Dates.now - 1.days > it[0].date)
                         getPubsFromNetwork()
                     else
-                        Flowable.just(it.map { it.fromRealm() })
+                        Flowable.just(it.map {
+                            try {
+                                it.fromRealm()
+                            } catch (t: Throwable) {
+                                println(it)
+                                PubMapDto.empty()
+                            }
+                        }
+                                .filter {
+                                    it != PubMapDto.empty()
+                                })
                 }
     }
 
