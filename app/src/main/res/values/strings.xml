@@ -14,7 +14,7 @@
     <string name="help_text">При открытии приложения вы увидите ближайший к Вам паб или магазин.
         Листните карточку влево и увидите следующий ближайший и т.д.
         Кликните на кнопку определения местоположения, чтобы начать листать заново.
-        Данные предоставлены порталом Russian Craft Beer: http://russiancraftbeer.ru/
+        Данные предоставлены порталом <a href="http://russiancraftbeer.ru/">Russian Craft Beer</a>
     </string>
     <string name="try_again">Попробовать еще раз</string>
     <string name="common_error">Не удалось загрузить.</string>

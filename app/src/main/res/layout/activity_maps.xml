@@ -34,7 +34,9 @@
         android:layout_height="wrap_content"
         android:background="@android:color/white">
         <TextView
-            android:autoLink="web"
+            android:id="@+id/help_card_text_view"
+            android:clickable="true"
+            android:linksClickable="true"
             android:text="@string/help_text"
             android:layout_margin="16dp"
             android:layout_height="wrap_content"

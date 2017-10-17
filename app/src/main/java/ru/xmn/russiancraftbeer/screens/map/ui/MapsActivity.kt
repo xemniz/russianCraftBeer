@@ -14,6 +14,7 @@ import android.os.PersistableBundle
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
+import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
@@ -52,7 +53,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        firebaseAnalytics = FirebaseAnalytics.getInstance(this);
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
         setContentView(R.layout.activity_maps)
         map.view!!.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
@@ -65,6 +66,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
     }
 
     private fun setClickListeners() {
+        help_card_text_view.movementMethod = LinkMovementMethod.getInstance()
         help_button.setOnClickListener { help_card.visible() }
         help_ok_button.setOnClickListener { help_card.gone() }
         map_error_button.setOnClickListener { mapViewModel.refresh() }
@@ -105,16 +107,16 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         @SuppressLint("ResourceType")
         val zoomControls = map.view!!.findViewById<View>(0x1)
 
-        if (zoomControls != null && zoomControls.getLayoutParams() is RelativeLayout.LayoutParams) {
+        if (zoomControls != null && zoomControls.layoutParams is RelativeLayout.LayoutParams) {
             // ZoomControl is inside of RelativeLayout
-            val params = zoomControls.getLayoutParams() as RelativeLayout.LayoutParams
+            val params = zoomControls.layoutParams as RelativeLayout.LayoutParams
 
             // Align it to - parent top|left
             params.addRule(RelativeLayout.ALIGN_PARENT_TOP)
 
             // Update margins, set to 10dp
             val margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 10f,
-                    getResources().getDisplayMetrics()).toInt()
+                    resources.displayMetrics).toInt()
             params.setMargins(margin, 64.px, margin, margin)
         }
     }
@@ -221,7 +223,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
 
                     override fun onDenied(permission: String) {
                     }
-                }).build().request();
+                }).build().request()
     }
 
     private fun setupViewModel() {
@@ -241,7 +243,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
 
                 }
                 it is MapState.Error -> {
-                    Crashlytics.logException(it.e);
+                    Crashlytics.logException(it.e)
                     mapLoading.gone()
                     mapError.visible()
                 }
