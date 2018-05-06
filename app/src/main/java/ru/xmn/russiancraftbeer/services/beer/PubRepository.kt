@@ -34,7 +34,7 @@ class PubRepository(val service: BeerService) {
     }
 
     fun getPub(id: String): Flowable<PubDto> {
-        val query = PubRealm().query { query -> query.equalTo("nid", id) }
+        val query = PubRealm().query { equalTo("nid", id) }
         if (query.isEmpty() || Dates.now - 1.hours > query[0].date)
             return getPubFromNetwork(id)
         else

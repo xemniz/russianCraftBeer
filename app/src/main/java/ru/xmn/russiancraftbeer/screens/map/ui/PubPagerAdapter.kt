@@ -33,7 +33,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
     var offset = 0f
     var observers: MutableMap<String, Observer<PubState>> = HashMap()
 
-    override fun isViewFromObject(view: View?, `object`: Any?): Boolean {
+    override fun isViewFromObject(view: View, `object`: Any): Boolean {
         return view === `object`
     }
 
@@ -56,10 +56,10 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
     }
 
     override fun destroyItem(viewGroup: ViewGroup, position: Int, view: Any) {
-        if(items.isEmpty()) return
+        if (items.isEmpty()) return
         val pubViewModel = pubViewModelFactory(items[position])
         val tag = items[position].uniqueTag
-        pubViewModel.mapState.removeObserver(observers.get(tag))
+        pubViewModel.mapState.removeObserver(observers[tag]!!)
         observers.remove(tag)
         viewGroup.removeView(view as View)
     }
@@ -83,20 +83,20 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
                         progressBarTopLayout.visible()
                         pub_error_button.gone()
                         pub_error_text.gone()
-                        bindPub(layout, PubDto.empty(), position, View.OnClickListener{pubViewModel.refresh()})
+                        bindPub(layout, PubDto.empty(), position, View.OnClickListener { pubViewModel.refresh() })
                     }
                     it is PubState.Success -> {
                         progressBarTopLayout.invisible()
                         pub_error_button.gone()
                         pub_error_text.gone()
-                        bindPub(layout, it.pub, position, View.OnClickListener{pubViewModel.refresh()})
+                        bindPub(layout, it.pub, position, View.OnClickListener { pubViewModel.refresh() })
                     }
                     it is PubState.Error -> {
                         Crashlytics.logException(it.e)
                         progressBarTopLayout.invisible()
                         pub_error_button.visible()
                         pub_error_text.visible()
-                        bindPub(layout, PubDto.empty(), position, View.OnClickListener{pubViewModel.refresh()})
+                        bindPub(layout, PubDto.empty(), position, View.OnClickListener { pubViewModel.refresh() })
                     }
                 }
             }

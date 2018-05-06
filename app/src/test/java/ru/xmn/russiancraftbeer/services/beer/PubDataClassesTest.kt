@@ -13,7 +13,7 @@ class PubDataClassesTest {
                 "logo",
                 "body",
                 listOf("one", "two", "three"),
-                listOf("one", "two", "three"),
+                listOf(MapPoint("x", listOf(12.toDouble(),12.toDouble()))),
                 listOf("one", "two", "three"),
                 listOf("one", "two", "three")
         ).apply { nid = "123123" }
@@ -29,7 +29,7 @@ class PubDataClassesTest {
                 "logo",
                 "body",
                 "logo",
-                "body",
+                "body"
         )
         val toRealm = pubDto.toRealm()
         assertEquals(pubDto, toRealm.fromRealm())

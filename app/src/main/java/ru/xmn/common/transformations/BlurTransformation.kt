@@ -28,6 +28,7 @@ constructor(context: Context,
 
 
     private val mContext: Context
+
     constructor(context: Context, radius: Int) : this(context, Glide.get(context).bitmapPool, radius, DEFAULT_DOWN_SAMPLING) {}
 
     constructor(context: Context, radius: Int, sampling: Int) : this(context, Glide.get(context).bitmapPool, radius, sampling) {}
@@ -39,7 +40,7 @@ constructor(context: Context,
     val id: String
         get() = "BlurTransformation(radius=$mRadius, sampling=$mSampling)"
 
-    override fun transform(context: Context?, resource: Resource<Bitmap>, outWidth: Int, outHeight: Int): Resource<Bitmap> {
+    override fun transform(context: Context, resource: Resource<Bitmap>, outWidth: Int, outHeight: Int): Resource<Bitmap> {
         val source = resource.get()
 
         val width = source.width

@@ -23,6 +23,7 @@ class RoundedCornersTransformation @JvmOverloads constructor(private val mBitmap
         OTHER_TOP_LEFT, OTHER_TOP_RIGHT, OTHER_BOTTOM_LEFT, OTHER_BOTTOM_RIGHT,
         DIAGONAL_FROM_TOP_LEFT, DIAGONAL_FROM_TOP_RIGHT
     }
+
     private val mDiameter: Int
 
     @JvmOverloads constructor(context: Context, radius: Int, margin: Int,
@@ -33,7 +34,7 @@ class RoundedCornersTransformation @JvmOverloads constructor(private val mBitmap
         mDiameter = mRadius * 2
     }
 
-    override fun transform(context: Context?, resource: Resource<Bitmap>, outWidth: Int, outHeight: Int): Resource<Bitmap> {
+    override fun transform(context: Context, resource: Resource<Bitmap>, outWidth: Int, outHeight: Int): Resource<Bitmap> {
         val source = resource.get()
 
         val width = source.width
@@ -51,7 +52,6 @@ class RoundedCornersTransformation @JvmOverloads constructor(private val mBitmap
         drawRoundRect(canvas, paint, width.toFloat(), height.toFloat())
         return BitmapResource.obtain(bitmap, mBitmapPool)!!
     }
-
 
 
     private val ID = "com.bumptech.glide.load.resource.bitmap.RoundedCornersTransformation"

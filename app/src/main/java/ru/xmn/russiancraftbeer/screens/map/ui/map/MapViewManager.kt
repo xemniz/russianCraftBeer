@@ -10,10 +10,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.ClusterManager
+import io.reactivex.subjects.BehaviorSubject
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapState
 import ru.xmn.russiancraftbeer.services.beer.PubMapDto
-import rx.subjects.BehaviorSubject
 import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.Focus
 
 
