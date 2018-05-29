@@ -10,17 +10,17 @@ import kotlinx.android.synthetic.main.item_pub_contact.view.*
 import ru.xmn.common.extensions.inflate
 import ru.xmn.common.ui.adapter.AutoUpdatableAdapter
 import ru.xmn.russiancraftbeer.R
-import ru.xmn.russiancraftbeer.services.beer.MapPoint
+import ru.xmn.russiancraftbeer.screens.map.bl.data.MapPoint
 import kotlin.properties.Delegates
 
-class PubContactsAdapter() : RecyclerView.Adapter<PubContactsAdapter.PubContactsViewHolder>(), AutoUpdatableAdapter {
+class PubContactsAdapter : RecyclerView.Adapter<PubContactsAdapter.PubContactsViewHolder>(), AutoUpdatableAdapter {
     companion object {
         fun from(adress: List<String>?, map: List<MapPoint>, phones: List<String>?, site: List<String>?): PubContactsAdapter {
             val items = ArrayList<ContactItem>()
             if (adress != null) {
                 items += adress.zip(map).map {
                     ContactItem(R.drawable.ic_location_on_black_24dp, it.first, View.OnClickListener { view ->
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=${it.second.coordinates[1]},${it.second.coordinates[0]}"))
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=${it.second.lat},${it.second.long}"))
                         ContextCompat.startActivity(view.context, intent, null)
                     })
                 }
@@ -37,7 +37,6 @@ class PubContactsAdapter() : RecyclerView.Adapter<PubContactsAdapter.PubContacts
             if (site != null) {
                 items += site.map {
                     ContactItem(R.drawable.ic_language_black_24dp, it, View.OnClickListener { view ->
-                        val url = "http://www.example.com"
                         val i = Intent(Intent.ACTION_VIEW)
                         i.data = Uri.parse(it)
                         ContextCompat.startActivity(view.context, i, null)
@@ -50,7 +49,7 @@ class PubContactsAdapter() : RecyclerView.Adapter<PubContactsAdapter.PubContacts
     }
 
     var items: List<ContactItem> by Delegates.observable(emptyList(),
-            { property, oldValue, newValue ->
+            { _, oldValue, newValue ->
                 autoNotify(oldValue, newValue) { a, b -> a.uniqueTag == b.uniqueTag }
             })
 
@@ -59,7 +58,7 @@ class PubContactsAdapter() : RecyclerView.Adapter<PubContactsAdapter.PubContacts
 
     override fun getItemCount(): Int = items.count()
 
-    class PubContactsViewHolder(val v: View) : RecyclerView.ViewHolder(v) {
+    class PubContactsViewHolder(private val v: View) : RecyclerView.ViewHolder(v) {
         fun bind(item: ContactItem) {
 
             v.apply {

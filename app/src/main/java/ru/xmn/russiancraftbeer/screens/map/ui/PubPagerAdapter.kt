@@ -21,21 +21,19 @@ import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubContactsAdapter
 import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubState
 import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
-import ru.xmn.russiancraftbeer.services.beer.PubDto
-import ru.xmn.russiancraftbeer.services.beer.PubMapDto
+import ru.xmn.russiancraftbeer.screens.map.bl.data.PubFullData
+import ru.xmn.russiancraftbeer.screens.map.bl.data.PubShortData
 import kotlin.properties.Delegates
 
 
-class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactory: (PubMapDto) -> PubViewModel, val itemClick: (position: Int) -> Unit) : PagerAdapter() {
+class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactory: (PubShortData) -> PubViewModel, val itemClick: (position: Int) -> Unit) : PagerAdapter() {
     val TAG = R.string.PubPagerAdapterTag
 
-    var items by Delegates.observable<List<PubMapDto>>(emptyList(), onChange = { _, _, value -> notifyDataSetChanged() })
+    var items by Delegates.observable<List<PubShortData>>(emptyList(), onChange = { _, _, _ -> notifyDataSetChanged() })
     var offset = 0f
     var observers: MutableMap<String, Observer<PubState>> = HashMap()
 
-    override fun isViewFromObject(view: View, `object`: Any): Boolean {
-        return view === `object`
-    }
+    override fun isViewFromObject(view: View, `object`: Any) = view === `object`
 
     override fun getCount(): Int {
         return items.count()
@@ -47,65 +45,65 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
 
     override fun instantiateItem(container: ViewGroup, position: Int): Any {
         val pubMapDto = items[position]
-        val inflater = LayoutInflater.from(container.context);
+        val inflater = LayoutInflater.from(container.context)
         val layout = inflater.inflate(R.layout.pub_sheet, container, false)
         layout.setTag(TAG, pubMapDto.uniqueTag)
         bind(layout, pubMapDto, position)
         container.addView(layout)
-        return layout;
+        return layout
     }
 
     override fun destroyItem(viewGroup: ViewGroup, position: Int, view: Any) {
         if (items.isEmpty()) return
         val pubViewModel = pubViewModelFactory(items[position])
         val tag = items[position].uniqueTag
-        pubViewModel.mapState.removeObserver(observers[tag]!!)
+        observers[tag]?.let { pubViewModel.mapState.removeObserver(it) }
         observers.remove(tag)
         viewGroup.removeView(view as View)
     }
 
-    private fun bind(layout: View, pubMapDto: PubMapDto, position: Int) {
+    private fun bind(layout: View, pubShortData: PubShortData, position: Int) {
         layout.apply {
             ViewCompat.setNestedScrollingEnabled(pubContacts, false)
-            pubTitle.text = pubMapDto.title
-            pubType.text = pubMapDto.type
-            pubLogo.loadUrl(pubMapDto.field_logo ?: "", pubLogoProgressBar,
+            pubTitle.text = pubShortData.title
+            pubType.text = pubShortData.type
+            pubLogo.loadUrl(pubShortData.image, pubLogoProgressBar,
                     transformations = listOf(RoundedCornersTransformation(pubLogoBack.context, 5, 0, RoundedCornersTransformation.CornerType.ALL)))
             pubLogoBack.loadUrl(
-                    pubMapDto.field_logo ?: "",
+                    pubShortData.image,
                     transformations = listOf(BlurTransformation(pubLogoBack.context))
             )
 
-            val pubViewModel = pubViewModelFactory(pubMapDto)
+            val pubViewModel = pubViewModelFactory(pubShortData)
             val observer = Observer<PubState> {
-                when {
-                    it is PubState.Loading -> {
+                when (it) {
+                    is PubState.Loading -> {
                         progressBarTopLayout.visible()
                         pub_error_button.gone()
                         pub_error_text.gone()
-                        bindPub(layout, PubDto.empty(), position, View.OnClickListener { pubViewModel.refresh() })
+                        bindPub(layout, PubFullData.empty(), position, View.OnClickListener { pubViewModel.refresh() })
                     }
-                    it is PubState.Success -> {
+                    is PubState.Success -> {
                         progressBarTopLayout.invisible()
                         pub_error_button.gone()
                         pub_error_text.gone()
                         bindPub(layout, it.pub, position, View.OnClickListener { pubViewModel.refresh() })
                     }
-                    it is PubState.Error -> {
+                    is PubState.Error -> {
                         Crashlytics.logException(it.e)
                         progressBarTopLayout.invisible()
                         pub_error_button.visible()
                         pub_error_text.visible()
-                        bindPub(layout, PubDto.empty(), position, View.OnClickListener { pubViewModel.refresh() })
+                        bindPub(layout, PubFullData.empty(), position, View.OnClickListener { pubViewModel.refresh() })
                     }
                 }
             }
-            observers.put(items[position].uniqueTag, observer)
+            observers[items[position].uniqueTag] = observer
             pubViewModel.mapState.observe(activity, observer)
         }
     }
 
-    fun bindPub(layout: View, pub: PubDto, position: Int, errorClick: View.OnClickListener) {
+    private fun bindPub(layout: View, pub: PubFullData, position: Int, errorClick: View.OnClickListener) {
         (layout as ViewGroup?)?.let {
             val transition = Fade()
                     .addTarget(layout.pubContacts)
@@ -121,9 +119,9 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
 
             pubLogo.setOnClickListener { itemClick(position) }
             topPanelTextBack.setOnClickListener { itemClick(position) }
-            pubDescription.text = pub.body
+            pubDescription.text = pub.description
             pubContacts.layoutManager = LinearLayoutManager(activity)
-            pubContacts.adapter = PubContactsAdapter.from(pub.address, pub.map!!, pub.phones, pub.site)
+            pubContacts.adapter = PubContactsAdapter.from(pub.addresses, pub.mapPoints, pub.phones, pub.webSites)
         }
         performOffset(activity, layout.pubCard, offset)
     }

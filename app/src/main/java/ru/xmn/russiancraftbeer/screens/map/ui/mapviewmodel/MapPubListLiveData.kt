@@ -14,9 +14,10 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import ru.xmn.common.extensions.distanceTo
 import ru.xmn.russiancraftbeer.screens.map.bl.MapListUseCase
+import ru.xmn.russiancraftbeer.screens.map.bl.data.MapPoint
 import java.util.*
 
-class MapPubListLiveData(val context: Context, val mapListUseCase: MapListUseCase) : LiveData<MapState>() {
+class MapPubListLiveData(val context: Context, private val mapListUseCase: MapListUseCase) : LiveData<MapState>() {
     private lateinit var googleApiClient: GoogleApiClient
     private lateinit var locationRequest: LocationRequest
     private val listener: LocationListener
@@ -31,7 +32,7 @@ class MapPubListLiveData(val context: Context, val mapListUseCase: MapListUseCas
         listener = LocationListener {
             val newLocation = LatLng(it.latitude, it.longitude)
             if (newLocation.distanceTo(currentLocation) > 1000) {
-                currentLocation = LatLng(it.latitude, it.longitude)
+                currentLocation = newLocation
                 subscribe()
             }
         }
@@ -49,15 +50,17 @@ class MapPubListLiveData(val context: Context, val mapListUseCase: MapListUseCas
         googleApiClient.connect()
     }
 
-    fun subscribe() {
+    private fun subscribe() {
         subscribe?.apply {
             if (!isDisposed)
                 dispose()
         }
-        subscribe = mapListUseCase.getPubsForMap(currentLocation)
-                .map<MapState> { MapState.Success(it, 0, UUID.randomUUID().toString()) }
+        subscribe = mapListUseCase.getPubsForMap(MapPoint.from(currentLocation))
+                .map<MapState> { it.fold(
+                        {MapState.Error(it)},
+                        {MapState.Success(it, 0, UUID.randomUUID().toString())}
+                ) }
                 .startWith(MapState.Loading())
-                .onErrorReturn { MapState.Error(it) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({

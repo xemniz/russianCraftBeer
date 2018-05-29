@@ -1,12 +1,14 @@
 package ru.xmn.russiancraftbeer.services.beer
 
-import io.reactivex.Flowable
+import io.reactivex.Single
 import retrofit2.http.*
+import ru.xmn.russiancraftbeer.services.beer.data.PubFullDataRealm
+import ru.xmn.russiancraftbeer.services.beer.data.PubShortDataRealm
 
 interface BeerService {
     @GET("json_data_3/json_data_23")
-    fun getPubListMap(): Flowable<List<PubMapDto>>
+    fun getPubListMap(): Single<List<PubShortDataRealm>>
 
     @GET("json_data_3/nidinfo")
-    fun getPub(@Query("nid") id: String): Flowable<List<PubDto>>
+    fun getPub(@Query("nid") id: String): Single<List<PubFullDataRealm>>
 }

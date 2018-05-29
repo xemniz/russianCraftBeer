@@ -4,13 +4,11 @@ import android.annotation.SuppressLint
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
-import android.arch.lifecycle.ViewModelProvider
 import android.content.Context
 import ru.xmn.russiancraftbeer.application.App
 import ru.xmn.russiancraftbeer.screens.map.bl.MapListUseCase
 import ru.xmn.russiancraftbeer.screens.map.di.MapModule
-import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
-import ru.xmn.russiancraftbeer.services.beer.PubMapDto
+import ru.xmn.russiancraftbeer.screens.map.bl.data.PubShortData
 import javax.inject.Inject
 import kotlin.properties.Delegates
 
@@ -19,7 +17,7 @@ class MapViewModel : ViewModel() {
     @SuppressLint("StaticFieldLeak")
     @Inject lateinit var context: Context
 
-    private val mapStateFromNetwork: MapPubListLiveData
+    private var mapStateFromNetwork: MapPubListLiveData
     private val currentItemLiveData: CurrentPubItemLiveData = CurrentPubItemLiveData()
     val mapState: LiveData<MapState>
 
@@ -36,6 +34,10 @@ class MapViewModel : ViewModel() {
                 { mapState: MapState -> currentItemLiveData.pushNewState(mapState) })
     }
 
+    fun reinit(){
+        mapStateFromNetwork = MapPubListLiveData(context, mapListUseCase)
+    }
+
     fun onPermissionGranted() {
         mapStateFromNetwork.connectAndSubscribeOnLocationChange()
     }
@@ -50,7 +52,7 @@ class MapViewModel : ViewModel() {
 }
 
 sealed class MapState {
-    class Success(val pubs: List<PubMapDto>, val itemNumberToSelect: Int, val listUniqueId: String, val focus: Focus = Focus.ON_ITEM) : MapState()
+    class Success(val pubs: List<PubShortData>, val itemNumberToSelect: Int, val listUniqueId: String, val focus: Focus = Focus.ON_ITEM) : MapState()
 
     class Error(val e: Throwable) : MapState() {
         val errorMessage: String

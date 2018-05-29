@@ -301,7 +301,7 @@ public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLay
 
     @Override
     public boolean onTouchEvent(CoordinatorLayout parent, V child, MotionEvent event) {
-        if (!child.isShown()) {
+        if (!child.isShown() || mViewDragHelper == null || event == null) {
             return false;
         }
         int action = MotionEventCompat.getActionMasked(event);

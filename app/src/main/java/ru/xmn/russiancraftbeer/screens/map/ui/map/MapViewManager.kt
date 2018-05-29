@@ -13,11 +13,11 @@ import com.google.maps.android.clustering.ClusterManager
 import io.reactivex.subjects.BehaviorSubject
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapState
-import ru.xmn.russiancraftbeer.services.beer.PubMapDto
+import ru.xmn.russiancraftbeer.screens.map.bl.data.PubShortData
 import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.Focus
 
 
-class MapViewManager(val activity: AppCompatActivity) {
+class MapViewManager(private val activity: AppCompatActivity) {
     private lateinit var map: GoogleMap
     private lateinit var delegate: Delegate
     private lateinit var clusterManager: ClusterManager<PubClusterItem>
@@ -48,26 +48,26 @@ class MapViewManager(val activity: AppCompatActivity) {
         clusterManager.setOnClusterItemClickListener { markerClick(it) }
 
         map.setPadding(0, 0, 0, activity.resources.getDimension(R.dimen.view_pager_collapsed_height).toInt())
-        map.getUiSettings().setZoomControlsEnabled(true)
+        map.uiSettings.isZoomControlsEnabled = true
         delegate.requestPermission()
         setListeners()
 
         itemsSubjects.subscribe {
-            when {
-                it is MapState.Loading -> {
+            when (it) {
+                is MapState.Loading -> {
                     //do nothing
                 }
-                it is MapState.Success -> {
+                is MapState.Success -> {
                     if (it.listUniqueId != listUniqueId) {
                         showPubsOnMap(it.pubs)
                         listUniqueId = it.listUniqueId
                     }
 
                     val itemNumberToSelect = it.itemNumberToSelect
-
-                    selectMarker(pubClusterItems[itemNumberToSelect], it.focus)
+                    if (it.pubs.isNotEmpty())
+                        selectMarker(pubClusterItems[itemNumberToSelect], it.focus)
                 }
-                it is MapState.Error -> {
+                is MapState.Error -> {
                     showPubsOnMap(emptyList())
                     dropPreviousMarkerHighlight()
                 }
@@ -97,12 +97,12 @@ class MapViewManager(val activity: AppCompatActivity) {
         map.setOnInfoWindowClickListener(clusterManager)
         clusterManager.setOnClusterClickListener({ cluster ->
             dropPreviousMarkerHighlight()
-            mapZoomIn(cluster.getPosition(), 2f)
+            mapZoomIn(cluster.position, 2f)
             true
         })
         map.setOnCameraMoveListener {
             val zoom = map.cameraPosition.zoom
-            pubClusterRenderer.current_zoom = zoom
+            pubClusterRenderer.currentZoom = zoom
             if (zoom < CLUSTERING_ZOOM && isItemHighlighted())
                 dropPreviousMarkerHighlight()
         }
@@ -133,11 +133,11 @@ class MapViewManager(val activity: AppCompatActivity) {
 
     //текущая локация по умолчанию
     private fun isLocationInBounds(location: LatLng? = currentItem?.position): Boolean {
-        val bounds = map.getProjection().getVisibleRegion().latLngBounds
+        val bounds = map.projection.visibleRegion.latLngBounds
         return bounds.contains(location)
     }
 
-    private fun showPubsOnMap(items: List<PubMapDto>) {
+    private fun showPubsOnMap(items: List<PubShortData>) {
         clearMap()
         pubClusterItems += items.map { PubClusterItem(it) }
         clusterManager.addItems(pubClusterItems)
@@ -197,7 +197,7 @@ class MapViewManager(val activity: AppCompatActivity) {
         currentMarkerItem = map.addMarker(MarkerOptions().apply {
             position(currentPubItem.position)
             when {
-                currentPubItem.pubMapDto.type == "Магазины" -> {
+                currentPubItem.pubShortData.type == "Магазины" -> {
                     zIndex(3f)
                     icon(BitmapDescriptorFactory.fromResource(R.drawable.map_store_icon))
                     anchor(.5f, .5f)
@@ -229,7 +229,7 @@ class MapViewManager(val activity: AppCompatActivity) {
     }
 
     private fun markerClick(pubClusterItem: PubClusterItem): Boolean {
-        delegate.markerClick(pubClusterItem.pubMapDto.uniqueTag)
+        delegate.markerClick(pubClusterItem.pubShortData.uniqueTag)
         return true
     }
 
@@ -247,4 +247,3 @@ class MapViewManager(val activity: AppCompatActivity) {
         }
     }
 }
-

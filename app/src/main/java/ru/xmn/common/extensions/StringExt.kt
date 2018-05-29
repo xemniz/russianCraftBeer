@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package ru.xmn.common.extensions
 
 import android.text.Html

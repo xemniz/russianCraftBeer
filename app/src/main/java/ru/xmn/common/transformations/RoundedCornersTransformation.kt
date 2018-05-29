@@ -82,7 +82,6 @@ class RoundedCornersTransformation @JvmOverloads constructor(private val mBitmap
             RoundedCornersTransformation.CornerType.OTHER_BOTTOM_RIGHT -> drawOtherBottomRightRoundRect(canvas, paint, right, bottom)
             RoundedCornersTransformation.CornerType.DIAGONAL_FROM_TOP_LEFT -> drawDiagonalFromTopLeftRoundRect(canvas, paint, right, bottom)
             RoundedCornersTransformation.CornerType.DIAGONAL_FROM_TOP_RIGHT -> drawDiagonalFromTopRightRoundRect(canvas, paint, right, bottom)
-            else -> canvas.drawRoundRect(RectF(mMargin.toFloat(), mMargin.toFloat(), right, bottom), mRadius.toFloat(), mRadius.toFloat(), paint)
         }
     }
 
@@ -193,7 +192,6 @@ class RoundedCornersTransformation @JvmOverloads constructor(private val mBitmap
 
     val id: String
         get() {
-            return "RoundedTransformation(radius=$mRadius, margin=$mMargin, diameter="
-            (+mDiameter).toString() + ", cornerType=" + mCornerType.name + ")"
+            return "RoundedTransformation(radius=$mRadius, margin=$mMargin, diameter=" + mDiameter.toString() + ", cornerType=" + mCornerType.name + ")"
         }
 }

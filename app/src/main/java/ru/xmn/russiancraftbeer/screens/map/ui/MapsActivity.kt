@@ -5,12 +5,10 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.arch.lifecycle.LifecycleRegistry
-import android.arch.lifecycle.LifecycleRegistryOwner
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
@@ -36,8 +34,7 @@ import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapViewModel
 import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
 
 
-class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
-    private val OFFSET: String = "OFFSET"
+class MapsActivity : AppCompatActivity() {
 
     private val registry = LifecycleRegistry(this)
 
@@ -57,10 +54,9 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         setContentView(R.layout.activity_maps)
         map.view!!.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
-        setupToolbar()
         setupBehaviors()
-        setupMap(savedInstanceState?.get(OFFSET) as Float? ?: 0f)
-        setupViewPager(savedInstanceState?.get(OFFSET) as Float? ?: 0f)
+        setupMap(savedInstanceState?.get(Companion.OFFSET) as Float? ?: 0f)
+        setupViewPager(savedInstanceState?.get(Companion.OFFSET) as Float? ?: 0f)
         setupViewModel()
         setClickListeners()
     }
@@ -143,10 +139,10 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
                     firebaseAnalytics.log(
                             FirebaseAnalytics.Event.VIEW_ITEM,
                             FirebaseAnalytics.Param.ITEM_ID to pubPagerAdapter.items[position].nid,
-                            FirebaseAnalytics.Param.ITEM_NAME to pubPagerAdapter.items[position].title!!,
-                            FirebaseAnalytics.Param.CONTENT_TYPE to pubPagerAdapter.items[position].type!!
+                            FirebaseAnalytics.Param.ITEM_NAME to pubPagerAdapter.items[position].title,
+                            FirebaseAnalytics.Param.CONTENT_TYPE to pubPagerAdapter.items[position].type
                     )
-                } catch(e: Exception) {
+                } catch (e: Exception) {
                     Log.d("MapsActivity", "Log failed")
                     e.printStackTrace()
                 }
@@ -163,12 +159,6 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
             inBounds && behavior.state != STATE_EXPANDED -> behavior.state = STATE_EXPANDED
             behavior.state == STATE_EXPANDED -> behavior.state = STATE_COLLAPSED
         }
-    }
-
-    private fun setupToolbar() {
-//        val toolbar = toolbar
-//        setSupportActionBar(toolbar)
-//        supportActionBar?.setTitle("Beer map")
     }
 
     private fun setupBehaviors() {
@@ -231,18 +221,16 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         mapViewModel.mapState.observe(this, Observer {
             updateViewPager(it!!)
             mapViewManager.updateMap(it)
-            when {
-                it is MapState.Loading -> {
+            when (it) {
+                is MapState.Loading -> {
                     mapError.gone()
                     mapLoading.visible()
                 }
-                it is MapState.Success -> {
+                is MapState.Success -> {
                     mapError.gone()
                     mapLoading.gone()
-
-
                 }
-                it is MapState.Error -> {
+                is MapState.Error -> {
                     Crashlytics.logException(it.e)
                     mapLoading.gone()
                     mapError.visible()
@@ -254,10 +242,10 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
     private var listUniqueId: String = ""
 
     private fun updateViewPager(mapState: MapState) {
-        when {
-            mapState is MapState.Loading -> {
+        when (mapState) {
+            is MapState.Loading -> {
             }
-            mapState is MapState.Success -> {
+            is MapState.Success -> {
                 if (mapState.listUniqueId != listUniqueId) {
                     (viewPager.adapter as PubPagerAdapter).items = mapState.pubs
                     listUniqueId = mapState.listUniqueId
@@ -265,7 +253,7 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
                 if (viewPager.currentItem != mapState.itemNumberToSelect)
                     viewPager.setCurrentItem(mapState.itemNumberToSelect, true)
             }
-            mapState is MapState.Error -> {
+            is MapState.Error -> {
                 (viewPager.adapter as PubPagerAdapter).items = emptyList()
             }
         }
@@ -279,14 +267,14 @@ class MapsActivity : AppCompatActivity(), LifecycleRegistryOwner {
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle?, outPersistentState: PersistableBundle?) {
-        super.onSaveInstanceState(outState, outPersistentState)
-    }
-
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putFloat(OFFSET, (viewPager.adapter as PubPagerAdapter).offset)
+        outState.putFloat(Companion.OFFSET, (viewPager.adapter as PubPagerAdapter).offset)
+    }
+
+    companion object {
+        private const val OFFSET: String = "OFFSET"
     }
 }
 

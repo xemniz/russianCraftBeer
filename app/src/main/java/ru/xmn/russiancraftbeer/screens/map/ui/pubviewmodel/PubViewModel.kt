@@ -1,22 +1,15 @@
 package ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel
 
-import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import android.arch.lifecycle.ViewModelProvider
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
 import ru.xmn.russiancraftbeer.application.App
-import ru.xmn.russiancraftbeer.screens.map.bl.PubUseCase
 import ru.xmn.russiancraftbeer.screens.map.di.MapModule
-import ru.xmn.russiancraftbeer.services.beer.PubDto
+import ru.xmn.russiancraftbeer.screens.map.bl.data.PubFullData
 import javax.inject.Inject
 
 class PubViewModel(val nid: String) : ViewModel() {
     @Inject
-    lateinit var pubUseCase: PubUseCase
-    val mapState: MutableLiveData<PubState> = MutableLiveData()
-    private var subscribe: Disposable? = null
+    lateinit var mapState: PubFullDataLiveData
 
     init {
         App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
@@ -29,16 +22,10 @@ class PubViewModel(val nid: String) : ViewModel() {
     }
 
     private fun clickPub(id: String) {
-        subscribe?.dispose()
-        subscribe = pubUseCase.getPub(id)
-                .map<PubState> { PubState.Success(it) }
-                .startWith(PubState.Loading())
-                .onErrorReturn { PubState.Error(it) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ mapState.value = it })
+        mapState.getPub(id)
     }
 
+    @Suppress("UNCHECKED_CAST")
     class Factory(val nid: String) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return PubViewModel(nid) as T
@@ -47,7 +34,7 @@ class PubViewModel(val nid: String) : ViewModel() {
 }
 
 sealed class PubState {
-    class Success(val pub: PubDto) : PubState()
+    class Success(val pub: PubFullData) : PubState()
     class Error(val e: Throwable) : PubState() {
         val errorMessage: String
 

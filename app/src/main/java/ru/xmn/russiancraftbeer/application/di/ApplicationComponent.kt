@@ -6,11 +6,7 @@ import ru.xmn.russiancraftbeer.screens.map.di.MapComponent
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = arrayOf(
-        ApplicationModule::class,
-        NetworkModule::class,
-        BeerModule::class
-))
+@Component(modules = [ApplicationModule::class, NetworkModule::class, BeerModule::class])
 interface ApplicationComponent {
     var provideMapComponentBuilder: MapComponent.Builder
 }
