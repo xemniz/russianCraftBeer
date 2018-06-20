@@ -12,7 +12,7 @@ class PubViewModel(val nid: String) : ViewModel() {
     lateinit var mapState: PubFullDataLiveData
 
     init {
-        App.component.provideMapComponentBuilder.mapModule(MapModule()).build().inject(this)
+        App.component.inject(this)
 
         refresh()
     }

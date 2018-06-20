@@ -3,18 +3,19 @@ package ru.xmn.russiancraftbeer.screens.map.ui
 import android.support.test.espresso.Espresso
 import android.support.test.espresso.Espresso.onView
 import android.support.test.espresso.IdlingRegistry
-import android.support.test.espresso.assertion.ViewAssertions.matches
-import android.support.test.espresso.matcher.ViewMatchers.*
+import android.support.test.espresso.matcher.ViewMatchers.isDescendantOfA
+import android.support.test.espresso.matcher.ViewMatchers.withId
 import android.support.test.filters.LargeTest
 import android.support.test.rule.ActivityTestRule
 import android.support.test.runner.AndroidJUnit4
-import com.zhuinden.espressohelper.*
+import com.zhuinden.espressohelper.checkIsDisplayed
+import com.zhuinden.espressohelper.checkIsNotDisplayed
+import com.zhuinden.espressohelper.performClick
+import com.zhuinden.espressohelper.performSwipeDown
 import org.hamcrest.CoreMatchers.allOf
-import org.hamcrest.CoreMatchers.not
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.R.id.*
 
 

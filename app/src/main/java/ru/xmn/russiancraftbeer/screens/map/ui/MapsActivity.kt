@@ -2,14 +2,14 @@ package ru.xmn.russiancraftbeer.screens.map.ui
 
 
 import android.Manifest
+
+
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.arch.lifecycle.LifecycleRegistry
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
 import android.text.method.LinkMovementMethod
@@ -29,13 +29,12 @@ import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior
 import ru.xmn.common.widgets.ViewPagerBottomSheetBehavior.*
 import ru.xmn.russiancraftbeer.R
 import ru.xmn.russiancraftbeer.screens.map.ui.map.MapViewManager
-import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapState
 import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapViewModel
+import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.StartListenLocation
 import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
 
-
 class MapsActivity : AppCompatActivity() {
-
+    private var lastListHash: String = ""
     private val registry = LifecycleRegistry(this)
 
     override fun getLifecycle(): LifecycleRegistry {
@@ -44,6 +43,7 @@ class MapsActivity : AppCompatActivity() {
 
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     private lateinit var mapViewModel: MapViewModel
+
     private lateinit var behavior: ViewPagerBottomSheetBehavior<ViewPager>
 
     val mapViewManager = MapViewManager(this)
@@ -55,8 +55,9 @@ class MapsActivity : AppCompatActivity() {
         map.view!!.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
         setupBehaviors()
-        setupMap(savedInstanceState?.get(Companion.OFFSET) as Float? ?: 0f)
-        setupViewPager(savedInstanceState?.get(Companion.OFFSET) as Float? ?: 0f)
+        val offset = savedInstanceState?.get(OFFSET) as Float? ?: 0f
+        setupMap(offset)
+        setupViewPager(offset)
         setupViewModel()
         setClickListeners()
     }
@@ -65,14 +66,13 @@ class MapsActivity : AppCompatActivity() {
         help_card_text_view.movementMethod = LinkMovementMethod.getInstance()
         help_button.setOnClickListener { help_card.visible() }
         help_ok_button.setOnClickListener { help_card.gone() }
-        map_error_button.setOnClickListener { mapViewModel.refresh() }
+        map_error_button.setOnClickListener { mapViewModel.store.dispatch(StartLoadingPubs) }
     }
 
     private fun setupMap(offset: Float) {
         mapViewManager.init(object : MapViewManager.Delegate {
             override fun mapClick() {
-                behavior.state = STATE_HIDDEN
-                help_card.gone()
+                mapViewModel.store.dispatch(MapClick)
             }
 
             override fun requestPermission() {
@@ -80,20 +80,15 @@ class MapsActivity : AppCompatActivity() {
             }
 
             override fun cameraMove() {
-                behavior.state = STATE_HIDDEN
-                help_card.gone()
+                mapViewModel.store.dispatch(MapClick)
             }
 
             override fun markerClick(tag: String) {
-                behavior.state = STATE_COLLAPSED
-                val adapter = viewPager.adapter as PubPagerAdapter
-                val i = adapter.items.indexOfFirst { tag == it.uniqueTag }
-                mapViewModel.currentItemPosition = i
+                mapViewModel.store.dispatch(SelectItem(tag, true))
             }
 
             override fun myPositionClick() {
-                behavior.state = STATE_COLLAPSED
-                mapViewModel.selectMyLocation()
+                mapViewModel.store.dispatch(SelectMyLocation)
             }
         })
 
@@ -133,14 +128,15 @@ class MapsActivity : AppCompatActivity() {
             }
 
             override fun onPageSelected(position: Int) {
-                mapViewModel.currentItemPosition = position
+                val pubShortData = pubPagerAdapter.items[position]
+                mapViewModel.store.dispatch(SelectItem(pubShortData.tag, false))
 
                 try {
                     firebaseAnalytics.log(
                             FirebaseAnalytics.Event.VIEW_ITEM,
-                            FirebaseAnalytics.Param.ITEM_ID to pubPagerAdapter.items[position].nid,
-                            FirebaseAnalytics.Param.ITEM_NAME to pubPagerAdapter.items[position].title,
-                            FirebaseAnalytics.Param.CONTENT_TYPE to pubPagerAdapter.items[position].type
+                            FirebaseAnalytics.Param.ITEM_ID to pubShortData.nid,
+                            FirebaseAnalytics.Param.ITEM_NAME to pubShortData.title,
+                            FirebaseAnalytics.Param.CONTENT_TYPE to pubShortData.type
                     )
                 } catch (e: Exception) {
                     Log.d("MapsActivity", "Log failed")
@@ -154,11 +150,7 @@ class MapsActivity : AppCompatActivity() {
 
     private fun clickOnItem() {
         val inBounds: Boolean = mapViewManager.isCurrentItemVisibleInMap()
-        when {
-            !inBounds -> mapViewManager.animateToCurrentItem()
-            inBounds && behavior.state != STATE_EXPANDED -> behavior.state = STATE_EXPANDED
-            behavior.state == STATE_EXPANDED -> behavior.state = STATE_COLLAPSED
-        }
+        mapViewModel.store.dispatch(ClickOnItem(inBounds))
     }
 
     private fun setupBehaviors() {
@@ -167,8 +159,15 @@ class MapsActivity : AppCompatActivity() {
         BottomSheetUtils.setupViewPager(bottomSheet)
         behavior.setBottomSheetCallback(object : ViewPagerBottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(sheet: View, newState: Int) {
-                if (newState == STATE_EXPANDED) help_button.invisible()
-                else help_button.visible()
+                val bottomSheetAction = when (newState) {
+                    STATE_EXPANDED -> ExpandBottomSheet
+                    STATE_COLLAPSED -> CollapseBottomSheet
+                    STATE_HIDDEN -> HideBottomSheet
+                    else -> null
+                }
+                bottomSheetAction?.let {
+                    mapViewModel.store.dispatch(it)
+                }
             }
 
             override fun onSlide(sheet: View, slideOffset: Float) {
@@ -179,12 +178,11 @@ class MapsActivity : AppCompatActivity() {
                 viewPager
                         .views
                         .map { it.pubCard }
-                        .forEach({
+                        .forEach {
                             performOffset(this@MapsActivity, it, slideOffset)
-                        })
+                        }
             }
         })
-        behavior.state = STATE_COLLAPSED
     }
 
     private fun layoutOnSlide(slideOffset: Float) {
@@ -193,12 +191,9 @@ class MapsActivity : AppCompatActivity() {
     }
 
     private fun requestPerm() {
-        val hasPermission = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-
-        if (hasPermission) {
+        if (hasLocationPermission()) {
             mapViewManager.onPermissionGranted()
-            mapViewModel.onPermissionGranted()
+            mapViewModel.store.dispatch(StartListenLocation)
         }
 
         PermissionWrapper.Builder(this)
@@ -208,7 +203,7 @@ class MapsActivity : AppCompatActivity() {
                 .addRequestPermissionsCallBack(object : OnRequestPermissionsCallBack {
                     override fun onGrant() {
                         mapViewManager.onPermissionGranted()
-                        mapViewModel.onPermissionGranted()
+                        mapViewModel.store.dispatch(StartListenLocation)
                     }
 
                     override fun onDenied(permission: String) {
@@ -218,59 +213,80 @@ class MapsActivity : AppCompatActivity() {
 
     private fun setupViewModel() {
         mapViewModel = ViewModelProviders.of(this).get(MapViewModel::class.java)
-        mapViewModel.mapState.observe(this, Observer {
-            updateViewPager(it!!)
-            mapViewManager.updateMap(it)
-            when (it) {
-                is MapState.Loading -> {
-                    mapError.gone()
-                    mapLoading.visible()
-                }
-                is MapState.Success -> {
-                    mapError.gone()
-                    mapLoading.gone()
-                }
-                is MapState.Error -> {
-                    Crashlytics.logException(it.e)
-                    mapLoading.gone()
-                    mapError.visible()
-                }
-            }
+        mapViewModel.mapScreen.observe(this, Observer {
+            it?.let(this@MapsActivity::onNewScreenState)
         })
     }
 
-    private var listUniqueId: String = ""
+    private fun onNewScreenState(mapScreenState: MapScreenState) {
+        bindViewPager(mapScreenState)
+        mapViewManager.bindMap(mapScreenState)
+        bindLoading(mapScreenState)
+        bindBehaviorState(mapScreenState.bottomSheetState)
+        if (mapScreenState.goBack) super.onBackPressed()
+    }
 
-    private fun updateViewPager(mapState: MapState) {
-        when (mapState) {
-            is MapState.Loading -> {
+    private fun bindBehaviorState(bottomSheetState: BottomSheetState) {
+        when (bottomSheetState) {
+            BottomSheetState.Collapsed -> {
+                if (behavior.state != STATE_COLLAPSED)
+                    behavior.state = STATE_COLLAPSED
             }
-            is MapState.Success -> {
-                if (mapState.listUniqueId != listUniqueId) {
-                    (viewPager.adapter as PubPagerAdapter).items = mapState.pubs
-                    listUniqueId = mapState.listUniqueId
+            BottomSheetState.Expanded -> {
+                if (behavior.state != STATE_EXPANDED)
+                    behavior.state = STATE_EXPANDED
+            }
+            BottomSheetState.Hidden -> {
+                if (behavior.state != STATE_HIDDEN)
+                    behavior.state = STATE_HIDDEN
+            }
+        }
+    }
+
+    private fun bindViewPager(mapScreenState: MapScreenState) {
+        when (mapScreenState.pubsState) {
+            is PubsState.Loading -> {
+            }
+            is PubsState.Success -> {
+                if (mapScreenState.pubsState.listHash != lastListHash) {
+                    (viewPager.adapter as PubPagerAdapter).items = mapScreenState.pubsState.pubs
+                    lastListHash = mapScreenState.pubsState.listHash
                 }
-                if (viewPager.currentItem != mapState.itemNumberToSelect)
-                    viewPager.setCurrentItem(mapState.itemNumberToSelect, true)
+                val indexOfSelected = mapScreenState.indexOfSelected()
+                if (viewPager.currentItem != indexOfSelected)
+                    viewPager.setCurrentItem(indexOfSelected ?: 0, true)
             }
-            is MapState.Error -> {
+            is PubsState.Error -> {
                 (viewPager.adapter as PubPagerAdapter).items = emptyList()
             }
         }
     }
 
-    override fun onBackPressed() {
-        when {
-            behavior.state == STATE_EXPANDED -> behavior.state = STATE_COLLAPSED
-            behavior.state == STATE_COLLAPSED -> behavior.state = STATE_HIDDEN
-            else -> super.onBackPressed()
+    private fun bindLoading(mapScreenState: MapScreenState) {
+        when (mapScreenState.pubsState) {
+            is PubsState.Loading -> {
+                mapError.gone()
+                mapLoading.visible()
+            }
+            is PubsState.Success -> {
+                mapError.gone()
+                mapLoading.gone()
+            }
+            is PubsState.Error -> {
+                Crashlytics.logException(mapScreenState.pubsState.e)
+                mapLoading.gone()
+                mapError.visible()
+            }
         }
     }
 
+    override fun onBackPressed() {
+        mapViewModel.store.dispatch(BackPressed)
+    }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putFloat(Companion.OFFSET, (viewPager.adapter as PubPagerAdapter).offset)
+        outState.putFloat(OFFSET, (viewPager.adapter as PubPagerAdapter).offset)
     }
 
     companion object {
@@ -288,6 +304,7 @@ fun performOffset(activity: Activity, pubCardView: View, slideOffset: Float) {
     val logoMinSize = activity.resources.getDimension(R.dimen.logo_collapsed_height)
     val logoHeight = (offsetedValue(slideOffset, logoMinSize, logoMaxSize)).toInt()
     pubCardView.pubLogo.changeHeight(logoHeight)
+    pubCardView.pubLogoBack.changeHeight(logoHeight)
 
     val contentAlpha = offsetedValue(slideOffset, 0f, 1f)
     pubCardView.pubContacts.alpha = contentAlpha
@@ -296,8 +313,14 @@ fun performOffset(activity: Activity, pubCardView: View, slideOffset: Float) {
     pubCardView.pub_error_text.alpha = contentAlpha
     pubCardView.pub_error_button.alpha = contentAlpha
 
+    val helpButtonAlpha = offsetedValue(slideOffset, 1f, 0f)
+    activity.help_button.alpha = helpButtonAlpha
+
     pubCardView.invalidate()
 
     val rotation = offsetedValue(slideOffset, 0F, -180F)
     pubCardView.pubSlideIcon.rotation = rotation
+
+    val elevation = offsetedValue(slideOffset, 24.px.toFloat(), 0.toFloat())
+    pubCardView.headCard.radius = Math.max(elevation, 0.5f)
 }

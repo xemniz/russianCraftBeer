@@ -23,15 +23,16 @@ import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubState
 import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
 import ru.xmn.russiancraftbeer.screens.map.bl.data.PubFullData
 import ru.xmn.russiancraftbeer.screens.map.bl.data.PubShortData
+import ru.xmn.russiancraftbeer.screens.map.bl.data.Pubs
 import kotlin.properties.Delegates
 
 
-class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactory: (PubShortData) -> PubViewModel, val itemClick: (position: Int) -> Unit) : PagerAdapter() {
+class PubPagerAdapter(private val activity: MapsActivity, private val pubViewModelFactory: (PubShortData) -> PubViewModel, private val itemClick: (position: Int) -> Unit) : PagerAdapter() {
     val TAG = R.string.PubPagerAdapterTag
 
-    var items by Delegates.observable<List<PubShortData>>(emptyList(), onChange = { _, _, _ -> notifyDataSetChanged() })
+    var items by Delegates.observable<Pubs>(emptyList(), onChange = { _, _, _ -> notifyDataSetChanged() })
     var offset = 0f
-    var observers: MutableMap<String, Observer<PubState>> = HashMap()
+    private var observers: MutableMap<String, Observer<PubState>> = HashMap()
 
     override fun isViewFromObject(view: View, `object`: Any) = view === `object`
 
@@ -40,14 +41,14 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
     }
 
     override fun getPageTitle(position: Int): CharSequence {
-        return items[position].uniqueTag
+        return items[position].tag
     }
 
     override fun instantiateItem(container: ViewGroup, position: Int): Any {
         val pubMapDto = items[position]
         val inflater = LayoutInflater.from(container.context)
         val layout = inflater.inflate(R.layout.pub_sheet, container, false)
-        layout.setTag(TAG, pubMapDto.uniqueTag)
+        layout.setTag(TAG, pubMapDto.tag)
         bind(layout, pubMapDto, position)
         container.addView(layout)
         return layout
@@ -56,7 +57,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
     override fun destroyItem(viewGroup: ViewGroup, position: Int, view: Any) {
         if (items.isEmpty()) return
         val pubViewModel = pubViewModelFactory(items[position])
-        val tag = items[position].uniqueTag
+        val tag = items[position].tag
         observers[tag]?.let { pubViewModel.mapState.removeObserver(it) }
         observers.remove(tag)
         viewGroup.removeView(view as View)
@@ -98,7 +99,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
                     }
                 }
             }
-            observers[items[position].uniqueTag] = observer
+            observers[items[position].tag] = observer
             pubViewModel.mapState.observe(activity, observer)
         }
     }
@@ -118,7 +119,7 @@ class PubPagerAdapter(private val activity: MapsActivity, val pubViewModelFactor
             progressBarTopLayout.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
             pubLogo.setOnClickListener { itemClick(position) }
-            topPanelTextBack.setOnClickListener { itemClick(position) }
+            headCard.setOnClickListener { itemClick(position) }
             pubDescription.text = pub.description
             pubContacts.layoutManager = LinearLayoutManager(activity)
             pubContacts.adapter = PubContactsAdapter.from(pub.addresses, pub.mapPoints, pub.phones, pub.webSites)

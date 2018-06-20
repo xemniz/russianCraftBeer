@@ -121,11 +121,14 @@ dependencies {
         transitive = true
     }
 
+    implementation 'com.zendesk.suas:suas:1.0.0'
+    implementation 'com.zendesk.suas:suas-logger:1.2.0'
+
     implementation 'io.arrow-kt:arrow-core:0.7.1'
 }
 configurations.all {
     resolutionStrategy {
-        force 'org.jetbrains.kotlin:kotlin-stdlib:1.2.31'
+        force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     }
 }
 apply plugin: 'com.google.gms.google-services'

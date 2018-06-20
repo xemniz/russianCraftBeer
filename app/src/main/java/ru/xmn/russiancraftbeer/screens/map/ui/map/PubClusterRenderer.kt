@@ -9,7 +9,7 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import ru.xmn.russiancraftbeer.R
 
-class PubClusterRenderer(val activity: AppCompatActivity,
+class PubClusterRenderer(private val activity: AppCompatActivity,
                          val map: GoogleMap,
                          clusterManager: ClusterManager<PubClusterItem>, val CLUSTERING_ZOOM: Int)
     : DefaultClusterRenderer<PubClusterItem>(activity, map, clusterManager) {
@@ -41,6 +41,4 @@ class PubClusterRenderer(val activity: AppCompatActivity,
             else -> super.shouldRenderAsCluster(cluster)
         }
     }
-
-
 }

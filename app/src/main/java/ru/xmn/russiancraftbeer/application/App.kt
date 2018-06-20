@@ -1,15 +1,17 @@
 package ru.xmn.russiancraftbeer.application
 
 import android.app.Application
+import com.crashlytics.android.Crashlytics
+import io.fabric.sdk.android.Fabric
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import ru.xmn.russiancraftbeer.BuildConfig
 import ru.xmn.russiancraftbeer.application.di.ApplicationComponent
 import ru.xmn.russiancraftbeer.application.di.ApplicationModule
 import ru.xmn.russiancraftbeer.application.di.DaggerApplicationComponent
-import com.crashlytics.android.Crashlytics
-import io.fabric.sdk.android.Fabric
-
+import ru.xmn.russiancraftbeer.screens.map.ui.MapScreenReducer
+import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.CurrentLocationModule
+import zendesk.suas.Suas
 
 
 class App : Application() {
@@ -22,7 +24,15 @@ class App : Application() {
         super.onCreate()
         initializeDagger()
         initializeRealm()
+        initializeSuas()
         Fabric.with(this, Crashlytics())
+    }
+
+    private fun initializeSuas() {
+        val store = Suas.createStore(MapScreenReducer())
+                .withMiddleware()
+                .build()
+        CurrentLocationModule(context = baseContext, store = store)
     }
 
     private fun initializeRealm() {
@@ -35,13 +45,12 @@ class App : Application() {
             configBuilder = configBuilder.deleteRealmIfMigrationNeeded()
 
         val config = configBuilder
-//                .migration(Migration())
                 .build()
 
         Realm.setDefaultConfiguration(config)
     }
 
-    fun initializeDagger() {
+    private fun initializeDagger() {
         component = DaggerApplicationComponent.builder()
                 .applicationModule(ApplicationModule(this))
                 .build()

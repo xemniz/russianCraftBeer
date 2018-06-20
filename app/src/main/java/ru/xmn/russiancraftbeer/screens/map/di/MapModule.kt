@@ -16,26 +16,15 @@ import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapViewModel
 import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
 import ru.xmn.russiancraftbeer.services.beer.BeerService
 import ru.xmn.russiancraftbeer.screens.map.bl.data.PubShortData
+import ru.xmn.russiancraftbeer.screens.map.bl.data.Pubs
 import ru.xmn.russiancraftbeer.services.beer.data.PubShortDataMapper
 import ru.xmn.russiancraftbeer.services.beer.data.PubShortDataRealm
-
-@Subcomponent(modules = [(MapModule::class)])
-interface MapComponent {
-    @Subcomponent.Builder
-    interface Builder {
-        fun build(): MapComponent
-        fun mapModule(mapModule: MapModule): Builder
-    }
-
-    fun inject(mapViewModel: MapViewModel)
-    fun inject(mapViewModel: PubViewModel)
-}
 
 @Module
 class MapModule {
     @Provides
     fun provideMapListUseCase(beerService: BeerService): MapListUseCase {
-        val repo: RepoSingleFactory<Unit, List<PubShortData>> = commonBeerRepo(
+        val repo: RepoSingleFactory<Unit, Pubs> = commonBeerRepo(
                 networkSingleFactory = {
                     beerService.getPubListMap()
                             .subscribeOn(Schedulers.io())

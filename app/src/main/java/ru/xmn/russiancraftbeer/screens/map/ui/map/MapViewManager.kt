@@ -12,9 +12,10 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.clustering.ClusterManager
 import io.reactivex.subjects.BehaviorSubject
 import ru.xmn.russiancraftbeer.R
-import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapState
-import ru.xmn.russiancraftbeer.screens.map.bl.data.PubShortData
-import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.Focus
+import ru.xmn.russiancraftbeer.screens.map.bl.data.MapPoint
+import ru.xmn.russiancraftbeer.screens.map.bl.data.Pubs
+import ru.xmn.russiancraftbeer.screens.map.ui.MapScreenState
+import ru.xmn.russiancraftbeer.screens.map.ui.PubsState
 
 
 class MapViewManager(private val activity: AppCompatActivity) {
@@ -29,7 +30,7 @@ class MapViewManager(private val activity: AppCompatActivity) {
     private var currentMarkerItem: Marker? = null
     private var currentItem: PubClusterItem? = null
 
-    private val itemsSubjects = BehaviorSubject.create<MapState>()
+    private val itemsSubjects = BehaviorSubject.create<MapScreenState>()
 
     fun init(d: Delegate) {
         this.delegate = d
@@ -52,22 +53,21 @@ class MapViewManager(private val activity: AppCompatActivity) {
         delegate.requestPermission()
         setListeners()
 
-        itemsSubjects.subscribe {
-            when (it) {
-                is MapState.Loading -> {
+        itemsSubjects.subscribe { mapState ->
+            when (mapState.pubsState) {
+                is PubsState.Loading -> {
                     //do nothing
                 }
-                is MapState.Success -> {
-                    if (it.listUniqueId != listUniqueId) {
-                        showPubsOnMap(it.pubs)
-                        listUniqueId = it.listUniqueId
+                is PubsState.Success -> {
+                    if (mapState.pubsState.listHash != listUniqueId) {
+                        showPubsOnMap(mapState.pubsState.pubs)
+                        listUniqueId = mapState.pubsState.listHash
                     }
 
-                    val itemNumberToSelect = it.itemNumberToSelect
-                    if (it.pubs.isNotEmpty())
-                        selectMarker(pubClusterItems[itemNumberToSelect], it.focus)
+                    if (mapState.pubsState.pubs.isNotEmpty())
+                        selectMarker(pubClusterItems.firstOrNull { it.pubShortData.tag == mapState.itemTagToSelect }, mapState.focus)
                 }
-                is MapState.Error -> {
+                is PubsState.Error -> {
                     showPubsOnMap(emptyList())
                     dropPreviousMarkerHighlight()
                 }
@@ -95,11 +95,11 @@ class MapViewManager(private val activity: AppCompatActivity) {
             }
         }
         map.setOnInfoWindowClickListener(clusterManager)
-        clusterManager.setOnClusterClickListener({ cluster ->
+        clusterManager.setOnClusterClickListener { cluster ->
             dropPreviousMarkerHighlight()
             mapZoomIn(cluster.position, 2f)
             true
-        })
+        }
         map.setOnCameraMoveListener {
             val zoom = map.cameraPosition.zoom
             pubClusterRenderer.currentZoom = zoom
@@ -120,8 +120,8 @@ class MapViewManager(private val activity: AppCompatActivity) {
     }
 
     //region api
-    fun updateMap(mapState: MapState) {
-        itemsSubjects.onNext(mapState)
+    fun bindMap(mapScreenState: MapScreenState) {
+        itemsSubjects.onNext(mapScreenState)
     }
 
     fun isCurrentItemVisibleInMap(): Boolean {
@@ -137,7 +137,7 @@ class MapViewManager(private val activity: AppCompatActivity) {
         return bounds.contains(location)
     }
 
-    private fun showPubsOnMap(items: List<PubShortData>) {
+    private fun showPubsOnMap(items: Pubs) {
         clearMap()
         pubClusterItems += items.map { PubClusterItem(it) }
         clusterManager.addItems(pubClusterItems)
@@ -153,22 +153,17 @@ class MapViewManager(private val activity: AppCompatActivity) {
         pubClusterItems.clear()
     }
 
-    private fun selectMarker(pubClusterItem: PubClusterItem, focus: Focus) {
+    private fun selectMarker(pubClusterItem: PubClusterItem?, focus: MapPoint) {
         dropPreviousMarkerHighlight()
 
-        currentItem = pubClusterItem
-        highlightMarker(pubClusterItem)
+        pubClusterItem?.let {
+            currentItem = pubClusterItem
+            highlightMarker(it)
+        }
 
         val zoom = if (map.cameraPosition.zoom < 15) 15f else map.cameraPosition.zoom
-        val lastKnownLocation = map.myLocation?.let { LatLng(it.latitude, it.longitude) }
-        val position = when (focus) {
-            Focus.ON_MY_LOCATION -> {
-                lastKnownLocation ?: pubClusterItem.position
-            }
-            Focus.ON_ITEM -> {
-                pubClusterItem.position
-            }
-        }
+        map.myLocation?.let { LatLng(it.latitude, it.longitude) }
+        val position = focus.latLng()
 
         //отключить скрытие итема на движение карты
         map.setOnCameraMoveStartedListener(null)
@@ -229,7 +224,7 @@ class MapViewManager(private val activity: AppCompatActivity) {
     }
 
     private fun markerClick(pubClusterItem: PubClusterItem): Boolean {
-        delegate.markerClick(pubClusterItem.pubShortData.uniqueTag)
+        delegate.markerClick(pubClusterItem.pubShortData.tag)
         return true
     }
 
@@ -239,11 +234,5 @@ class MapViewManager(private val activity: AppCompatActivity) {
         fun cameraMove()
         fun markerClick(tag: String)
         fun myPositionClick()
-    }
-
-    fun animateToCurrentItem() {
-        currentItem?.let {
-            selectMarker(it, Focus.ON_ITEM)
-        }
     }
 }

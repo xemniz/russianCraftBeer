@@ -1,13 +1,16 @@
 package ru.xmn.russiancraftbeer.application.di
 
 import dagger.Component
+import ru.xmn.russiancraftbeer.screens.map.di.MapModule
+import ru.xmn.russiancraftbeer.screens.map.ui.mapviewmodel.MapViewModel
+import ru.xmn.russiancraftbeer.screens.map.ui.pubviewmodel.PubViewModel
 import ru.xmn.russiancraftbeer.services.beer.BeerModule
-import ru.xmn.russiancraftbeer.screens.map.di.MapComponent
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [ApplicationModule::class, NetworkModule::class, BeerModule::class])
+@Component(modules = [ApplicationModule::class, NetworkModule::class, BeerModule::class, MapModule::class])
 interface ApplicationComponent {
-    var provideMapComponentBuilder: MapComponent.Builder
+    fun inject(mapViewModel: MapViewModel)
+    fun inject(mapViewModel: PubViewModel)
 }
 

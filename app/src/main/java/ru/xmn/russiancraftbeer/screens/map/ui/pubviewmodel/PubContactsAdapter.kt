@@ -48,10 +48,9 @@ class PubContactsAdapter : RecyclerView.Adapter<PubContactsAdapter.PubContactsVi
         }
     }
 
-    var items: List<ContactItem> by Delegates.observable(emptyList(),
-            { _, oldValue, newValue ->
-                autoNotify(oldValue, newValue) { a, b -> a.uniqueTag == b.uniqueTag }
-            })
+    var items: List<ContactItem> by Delegates.observable(emptyList()) { _, oldValue, newValue ->
+        autoNotify(oldValue, newValue) { a, b -> a.uniqueTag == b.uniqueTag }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PubContactsViewHolder = PubContactsViewHolder(parent.inflate(R.layout.item_pub_contact))
     override fun onBindViewHolder(holder: PubContactsViewHolder, position: Int) = holder.bind(items[position])

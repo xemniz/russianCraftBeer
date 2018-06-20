@@ -66,8 +66,8 @@ public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLay
          * @param bottomSheet The bottom sheet view.
          * @param slideOffset The new offset of this bottom sheet within [-1,1] range. Offset
          *                    increases as this bottom sheet is moving upward. From 0 to 1 the sheet
-         *                    is between collapsed and expanded states and from -1 to 0 it is
-         *                    between hidden and collapsed states.
+         *                    is between Collapsed and Expanded states and from -1 to 0 it is
+         *                    between Hidden and Collapsed states.
          */
         public abstract void onSlide(@NonNull View bottomSheet, float slideOffset);
     }
@@ -83,17 +83,17 @@ public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLay
     public static final int STATE_SETTLING = 2;
 
     /**
-     * The bottom sheet is expanded.
+     * The bottom sheet is Expanded.
      */
     public static final int STATE_EXPANDED = 3;
 
     /**
-     * The bottom sheet is collapsed.
+     * The bottom sheet is Collapsed.
      */
     public static final int STATE_COLLAPSED = 4;
 
     /**
-     * The bottom sheet is hidden.
+     * The bottom sheet is Hidden.
      */
     public static final int STATE_HIDDEN = 5;
 
@@ -201,7 +201,7 @@ public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLay
     public void onRestoreInstanceState(CoordinatorLayout parent, V child, Parcelable state) {
         SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(parent, child, ss.getSuperState());
-        // Intermediate states are restored as collapsed state
+        // Intermediate states are restored as Collapsed state
         if (ss.state == STATE_DRAGGING || ss.state == STATE_SETTLING) {
             mState = STATE_COLLAPSED;
         } else {
@@ -426,9 +426,9 @@ public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLay
     }
 
     /**
-     * Sets the height of the bottom sheet when it is collapsed.
+     * Sets the height of the bottom sheet when it is Collapsed.
      *
-     * @param peekHeight The height of the collapsed bottom sheet in pixels, or
+     * @param peekHeight The height of the Collapsed bottom sheet in pixels, or
      *                   {@link #PEEK_HEIGHT_AUTO} to configure the sheet to peek automatically
      *                   at 16:9 ratio keyline.
      * @attr ref android.support.design.R.styleable#BottomSheetBehavior_Layout_behavior_peekHeight
@@ -455,9 +455,9 @@ public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLay
     }
 
     /**
-     * Gets the height of the bottom sheet when it is collapsed.
+     * Gets the height of the bottom sheet when it is Collapsed.
      *
-     * @return The height of the collapsed bottom sheet in pixels, or {@link #PEEK_HEIGHT_AUTO}
+     * @return The height of the Collapsed bottom sheet in pixels, or {@link #PEEK_HEIGHT_AUTO}
      * if the sheet is configured to peek automatically at 16:9 ratio keyline
      * @attr ref android.support.design.R.styleable#BottomSheetBehavior_Layout_behavior_peekHeight
      */
@@ -486,10 +486,10 @@ public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLay
     }
 
     /**
-     * Sets whether this bottom sheet should skip the collapsed state when it is being hidden
-     * after it is expanded once. Setting this to true has no effect unless the sheet is hideable.
+     * Sets whether this bottom sheet should skip the Collapsed state when it is being Hidden
+     * after it is Expanded once. Setting this to true has no effect unless the sheet is hideable.
      *
-     * @param skipCollapsed True if the bottom sheet should skip the collapsed state.
+     * @param skipCollapsed True if the bottom sheet should skip the Collapsed state.
      * @attr ref android.support.design.R.styleable#BottomSheetBehavior_Layout_behavior_skipCollapsed
      */
     public void setSkipCollapsed(boolean skipCollapsed) {
@@ -497,10 +497,10 @@ public class ViewPagerBottomSheetBehavior<V extends View> extends CoordinatorLay
     }
 
     /**
-     * Sets whether this bottom sheet should skip the collapsed state when it is being hidden
-     * after it is expanded once.
+     * Sets whether this bottom sheet should skip the Collapsed state when it is being Hidden
+     * after it is Expanded once.
      *
-     * @return Whether the bottom sheet should skip the collapsed state.
+     * @return Whether the bottom sheet should skip the Collapsed state.
      * @attr ref android.support.design.R.styleable#BottomSheetBehavior_Layout_behavior_skipCollapsed
      */
     public boolean getSkipCollapsed() {
