@@ -15,7 +15,7 @@ class PubShortDataMapper {
 
     //бывают пабы с несколькими адресами. для отображения вычленяем адреса, координаты в отдельные объекты
     private fun List<PubShortDataRealm>.allPubsToUnique(): List<PubShortDataRealm> {
-        return fold(ArrayList(), { arrayList, pubShortDataRealm ->
+        return fold(ArrayList()) { arrayList, pubShortDataRealm ->
             if (pubShortDataRealm.map!!.size > 1) {
                 val pubsFlattenByMapPoint = pubShortDataRealm.map!!.mapIndexed { i, _ ->
                     val mapPointForIndex = pubShortDataRealm.map!![i]
@@ -30,7 +30,7 @@ class PubShortDataMapper {
             } else
                 arrayList.add(pubShortDataRealm)
             arrayList
-        })
+        }
     }
 
     private fun PubShortDataRealm.copyWith(mapPointForIndex: MapPointRealm?, addressForMapPoint: String?): PubShortDataRealm {
