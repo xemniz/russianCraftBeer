@@ -1,0 +1,24 @@
+[
+  {
+  "map": [],
+  "address": [
+    "Палашевский Малый переулок, 6, Москва, Россия, 123104"
+  ],
+  "nid": "398",
+  "type": "Заведения",
+  "title": "Crafter",
+  "field_logo": "<img typeof=\"foaf:Image\" class=\"img-responsive\" src=\"http://russiancraftbeer.ru/sites/default/files/styles/medium/public/craftrer_bar.jpg?itok=te0F9jnl\" width=\"180\" height=\"220\" alt=\"\" />"
+},
+  {
+    "map": [
+      "{\"type\":\"Point\",\"coordinates\":[82.923843,55.023872]}"
+    ],
+    "address": [
+      "Коммунистическая улица, 45, Новосибирск, Новосибирская область, Россия"
+    ],
+    "nid": "399",
+    "type": "Заведения",
+    "title": "The Rooks, shop&amp;pub Craft Beer",
+    "field_logo": "<img typeof=\"foaf:Image\" class=\"img-responsive\" src=\"http://russiancraftbeer.ru/sites/default/files/styles/medium/public/rooks.jpg?itok=xQpJvKwy\" width=\"220\" height=\"206\" alt=\"\" />"
+  }
+]
