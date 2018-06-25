@@ -18,7 +18,8 @@ data class WrongClassField(val className: String, val fieldName: String, val cla
 
 private operator fun GsonTestResult.plus(test: GsonTestResult) =
         copy(classFieldsInClasses = classFieldsInClasses + test.classFieldsInClasses,
-                classFieldsInJson = classFieldsInJson + test.classFieldsInJson)
+                classFieldsInJson = classFieldsInJson + test.classFieldsInJson,
+                wrongClassFields = wrongClassFields + test.wrongClassFields)
 
 fun <T> test(clazz: Class<T>, json: String): GsonTestResult {
     val parser = JsonParser()
